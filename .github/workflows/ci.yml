@@ -41,6 +41,8 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate
+          touch database/database.sqlite
+          php artisan migrate --force # the OpenAPI export reads settings while analysing routes
 
       - name: Code style (Pint)
         run: vendor/bin/pint --test
@@ -108,7 +110,7 @@ jobs:
 
       - name: Type check
         working-directory: apps/storefront
-        run: pnpm exec tsc --noEmit
+        run: pnpm exec next typegen && pnpm exec tsc --noEmit # PageProps etc. are generated route types
 
       - name: Lint
         working-directory: apps/storefront
