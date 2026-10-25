@@ -58,12 +58,12 @@ class ManageAiSettings extends Page
                         TextInput::make('api_key')->label('Anthropic API key')->password()->revealable()->autocomplete('off')->maxLength(300)
                             ->placeholder($stored ? '•••••••• সেভ করা আছে — বদলাতে নতুনটা দিন' : 'sk-ant-…')
                             ->helperText('কোথায় পাবেন: platform.claude.com → API keys → Create key। Key শুধু সার্ভারে এনক্রিপ্ট করে রাখা হয়।')
-                            ->hintAction($stored ? Action::make('clearKey')->label('মুছে ফেলুন')->color('danger')->requiresConfirmation()->action(function () {
+                            ->hintAction(Action::make('clearKey')->label('মুছে ফেলুন')->color('danger')->requiresConfirmation()->visible($stored)->action(function () {
                                 $settings = app(AiSettings::class);
                                 $settings->api_key = null;
                                 $settings->save();
                                 Notification::make()->success()->title('মুছে ফেলা হয়েছে')->send();
-                            }) : null),
+                            })),
                         Select::make('model')->label('মডেল')->options(AiSettings::MODELS)->native(false)->required(),
                         Textarea::make('brand_voice')->label('লেখার ধরন (ঐচ্ছিক)')->rows(4)->maxLength(1500)->columnSpanFull()
                             ->placeholder('যেমন: "আপনি" সম্বোধন করবেন, ছোট বাক্য, "প্রিমিয়াম" শব্দটা কম ব্যবহার করবেন।'),
