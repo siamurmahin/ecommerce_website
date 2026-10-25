@@ -38,7 +38,7 @@ export function ProductCard({ product, priority, badge = product.badge ?? undefi
   return (
     <article
       className={cn(
-        "group flex h-full flex-col rounded-lg border border-border/60 bg-card p-2 shadow-[0_4px_14px_-6px_rgba(23,23,23,0.12)] transition-shadow duration-300 hover:shadow-[0_14px_32px_-12px_rgba(23,23,23,0.22)] sm:p-2.5",
+        "group @container flex h-full flex-col rounded-lg border border-border/60 bg-card p-2 shadow-[0_4px_14px_-6px_rgba(23,23,23,0.12)] transition-shadow duration-300 hover:shadow-[0_14px_32px_-12px_rgba(23,23,23,0.22)] sm:p-2.5",
         className,
       )}
     >
@@ -115,13 +115,14 @@ export function ProductCard({ product, priority, badge = product.badge ?? undefi
             <span className="shrink-0 text-muted-foreground tabular-nums">{t("card.sold", { count: formatNumber(product.sold_count, locale) })}</span>
           ) : null}
         </div>
-        <div className="flex items-start justify-between gap-2">
+        {/* Narrow cards (phones, 3-up tablet grids) stack the price under the name; wide cards put it on the right. */}
+        <div className="flex flex-col gap-1 @[15rem]:flex-row @[15rem]:items-start @[15rem]:justify-between @[15rem]:gap-2">
           <h3 className="line-clamp-2 min-h-[2.6em] min-w-0 flex-1 font-sans text-[13px] leading-tight font-bold sm:text-[15px]">
             <Link href={`/p/${product.slug}`} className="transition-colors hover:text-primary">
               {product.name}
             </Link>
           </h3>
-          <div className="flex shrink-0 flex-col items-end leading-tight tabular-nums">
+          <div className="flex shrink-0 flex-wrap items-baseline gap-x-1.5 leading-tight tabular-nums @[15rem]:flex-col @[15rem]:items-end @[15rem]:gap-0">
             {product.price_from && <span className="text-[10px] text-muted-foreground">{t("product.from")}</span>}
             <strong className="text-[13px] font-bold whitespace-nowrap text-foreground sm:text-[15px]">{formatTaka(product.price, locale)}</strong>
             {product.compare_price && product.compare_price > product.price ? (

@@ -60,7 +60,7 @@ export default async function LocaleLayout({ children }: LayoutProps<"/[locale]"
       <head>
         <style id="theme" dangerouslySetInnerHTML={{ __html: themeCss(settings.theme) }} />
       </head>
-      <body className="min-h-full flex flex-col pb-24 md:pb-0">
+      <body className="min-h-dvh flex flex-col pb-24 md:pb-0">
         <TrackingScripts config={tracking} />
         <NextIntlClientProvider>
           <QueryProvider>

@@ -25,8 +25,9 @@ export function Reveal({ children, className, delay = 0, as = "div" }: Props) {
       className={className}
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "0px 0px -8% 0px" }}
-      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+      // Start just before the element enters the screen so fast scrolling never shows empty sections.
+      viewport={{ once: true, margin: "0px 0px 12% 0px" }}
+      transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </Tag>

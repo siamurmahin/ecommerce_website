@@ -14,8 +14,8 @@ export async function SiteFooter() {
 
   return (
     <footer className="site-chrome mt-24 border-t border-border bg-card">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div className="flex flex-col gap-4">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-6 gap-y-10 px-4 py-12 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:gap-10 md:py-14">
+        <div className="col-span-2 flex flex-col gap-4 md:col-span-1">
           <BrandMark brand={settings.brand} className="text-2xl" />
           {settings.footer_about && <p className="max-w-xs text-sm leading-relaxed text-muted-foreground">{settings.footer_about}</p>}
           <ul className="flex flex-col gap-2 text-sm">
