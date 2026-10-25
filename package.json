@@ -1,0 +1,8 @@
+{
+  "name": "looks-jhorna",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "scripts": {
+    "api:types": "cd apps/backend && php artisan scramble:export --path=../../packages/api-types/openapi.json && pnpm --filter @looks-jhorna/api-types generate"
+  }
+}

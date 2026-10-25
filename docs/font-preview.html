@@ -1,0 +1,266 @@
+<title>Looks Jhorna Typography</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Anek+Bangla:wght@400;500;600;700&family=Anek+Latin:wght@400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Hind+Siliguri:wght@400;500;600&family=Manrope:wght@400;500;700&family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Serif+Bengali:wght@400;600;700&family=Tiro+Bangla&display=swap">
+<style>
+/* Layout: one column, pairing switcher on top, then a live storefront mock rendered in the chosen pairing */
+:root {
+  --bg: #F8F8F6;
+  --surface: #FFFFFF;
+  --sand: #EFEFEC;
+  --placeholder: #E3E3DF;
+  --fg: #171717;
+  --muted: #6B6B68;
+  --line: #E6E6E2;
+  --emerald: #0F4C3A;
+  --on-emerald: #FFFFFF;
+  --gold: #B8975A;
+
+  /* Pairing A (default) */
+  --display: "Fraunces", "Noto Serif Bengali", Georgia, serif;
+  --body: "Manrope", "Noto Sans Bengali", system-ui, sans-serif;
+  --display-weight: 600;
+  --arabic: "Amiri", serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212; --surface: #1B1B1B; --sand: #222222; --placeholder: #2C2C2C; --fg: #EDEDEB; --muted: #A3A3A0;
+    --line: #2E2E2E; --emerald: #4FA383; --on-emerald: #0E1A14; --gold: #D2B47A; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212; --surface: #1B1B1B; --sand: #222222; --placeholder: #2C2C2C; --fg: #EDEDEB; --muted: #A3A3A0;
+  --line: #2E2E2E; --emerald: #4FA383; --on-emerald: #0E1A14; --gold: #D2B47A; color-scheme: dark;
+}
+:root[data-pair="b"] {
+  --display: "Anek Latin", "Anek Bangla", system-ui, sans-serif;
+  --body: "Manrope", "Hind Siliguri", system-ui, sans-serif;
+  --display-weight: 600;
+}
+:root[data-pair="c"] {
+  --display: "Cormorant Garamond", "Tiro Bangla", Georgia, serif;
+  --body: "DM Sans", "Noto Sans Bengali", system-ui, sans-serif;
+  --display-weight: 600;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--body); font-size: 16px; line-height: 1.7;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.wrap { max-width: 1040px; margin: 0 auto; display: grid; gap: 48px; }
+h1, h2, h3 { font-family: var(--display); font-weight: var(--display-weight); text-wrap: balance; margin: 0; line-height: 1.25; }
+p { margin: 0; }
+.eyebrow { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); font-weight: 700; }
+
+/* Switcher */
+.intro { display: grid; gap: 16px; }
+.intro h1 { font-size: clamp(28px, 4vw, 40px); }
+.intro p { color: var(--muted); max-width: 62ch; }
+.pairs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pair {
+  all: unset; cursor: pointer; display: grid; gap: 6px; padding: 16px 18px;
+  border: 1px solid var(--line); border-radius: 14px; background: var(--surface);
+  transition: border-color .2s, transform .2s;
+}
+.pair:hover { transform: translateY(-2px); }
+.pair:focus-visible { outline: 2px solid var(--emerald); outline-offset: 2px; }
+.pair[aria-pressed="true"] { border-color: var(--emerald); box-shadow: inset 0 0 0 1px var(--emerald); }
+.pair .tag { font-size: 12px; color: var(--muted); }
+.pair .name { font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+.pair .rec { font-size: 11px; background: var(--emerald); color: var(--on-emerald); padding: 2px 8px; border-radius: 99px; align-self: center; white-space: nowrap; }
+.pair .faces { font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+/* Hero mock */
+.hero {
+  border-radius: 24px; background: var(--surface); border: 1px solid var(--line);
+  display: grid; grid-template-columns: 1.2fr 1fr; gap: 24px; padding: clamp(28px, 5vw, 56px);
+}
+.hero .copy { display: grid; gap: 18px; align-content: center; }
+.hero h2 { font-size: clamp(30px, 5vw, 52px); }
+.hero p { color: var(--muted); max-width: 44ch; }
+.btns { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { font: inherit; font-weight: 600; border-radius: 99px; padding: 12px 24px; border: 1px solid transparent; cursor: pointer; }
+.btn-primary { background: var(--emerald); color: var(--on-emerald); }
+.btn-ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+.hero .art {
+  min-height: 260px; border-radius: 16px; background: var(--placeholder);
+  display: grid; place-items: center; font-size: 14px; color: var(--muted);
+}
+
+/* Products */
+.section-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; }
+.section-head h2 { font-size: clamp(24px, 3vw, 32px); }
+.section-head a { color: var(--emerald); font-weight: 600; text-decoration: none; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px; }
+.card { display: grid; gap: 10px; }
+.thumb {
+  aspect-ratio: 4 / 5; max-width: 100%; border-radius: 14px; position: relative;
+  background: var(--placeholder);
+}
+.badge { position: absolute; top: 12px; left: 12px; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 99px; background: var(--surface); color: var(--emerald); white-space: nowrap; }
+.card .cat { font-size: 12px; color: var(--muted); letter-spacing: .06em; }
+.card h3 { font-size: 19px; }
+.price { display: flex; gap: 10px; align-items: baseline; font-variant-numeric: tabular-nums; }
+.price strong { font-size: 18px; color: var(--emerald); }
+.price s { color: var(--muted); font-size: 14px; }
+
+/* Article + specimen */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+.article { display: grid; gap: 14px; }
+.article h2 { font-size: 28px; }
+.article p { max-width: 62ch; }
+.specimen { display: grid; gap: 14px; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.specimen .row { display: grid; gap: 2px; }
+.specimen .lbl { font-size: 12px; color: var(--muted); }
+.s-xl { font-family: var(--display); font-weight: var(--display-weight); font-size: 36px; line-height: 1.2; }
+.s-l { font-family: var(--display); font-size: 24px; line-height: 1.3; }
+.s-m { font-size: 16px; }
+.s-s { font-size: 13px; color: var(--muted); }
+.s-w { display: flex; flex-wrap: wrap; gap: 16px; font-size: 20px; }
+
+/* Bottom nav mock */
+.navdemo { display: grid; gap: 14px; justify-items: center; }
+.navdemo p { color: var(--muted); font-size: 14px; text-align: center; }
+.bottom-nav {
+  width: min(400px, 100%); display: grid; grid-template-columns: repeat(5, 1fr); align-items: end;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 28px; padding: 10px 8px 12px;
+  box-shadow: 0 10px 30px rgba(15, 76, 58, .12);
+}
+.bottom-nav button { all: unset; cursor: pointer; display: grid; justify-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.bottom-nav button:focus-visible { outline: 2px solid var(--emerald); outline-offset: 4px; border-radius: 8px; }
+.bottom-nav svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.7; }
+.bottom-nav .home { color: var(--emerald); font-weight: 600; }
+.bottom-nav .home span.disc {
+  width: 54px; height: 54px; margin-top: -30px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--emerald); color: var(--on-emerald); box-shadow: 0 0 0 6px var(--bg);
+  transition: transform .25s;
+}
+.bottom-nav .home:hover span.disc { transform: translateY(-3px); }
+.bottom-nav .cart-count { position: relative; }
+.bottom-nav .cart-count::after { content: "২"; position: absolute; top: -4px; right: -8px; font-size: 10px; background: var(--gold); color: #1C1C1A; border-radius: 99px; padding: 0 5px; line-height: 16px; }
+
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 20px; }
+
+@media (max-width: 760px) {
+  .hero, .split { grid-template-columns: 1fr; }
+  .hero .art { min-height: 200px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <section class="intro">
+    <span class="eyebrow">Looks Jhorna · ফন্ট বাছাই</span>
+    <h1>কোন ফন্ট জোড়াটা আপনার ব্র্যান্ডের সাথে মানায়?</h1>
+    <p>নিচের তিনটা জোড়ার যেকোনোটায় চাপ দিন। পুরো পেজ, মানে হিরো, প্রোডাক্ট কার্ড, আর্টিকেল আর মোবাইল মেনু, সাথে সাথে ঐ ফন্টে বদলে যাবে। বাংলা আর ইংরেজি দুটোই একসাথে দেখুন।</p>
+    <div class="pairs" role="group" aria-label="ফন্ট জোড়া">
+      <button class="pair" id="pair-a" data-pair="a" aria-pressed="true">
+        <span class="tag">জোড়া A · সম্ভ্রান্ত</span>
+        <span class="name">Editorial Premium <span class="rec">প্রস্তাবিত</span></span>
+        <span class="faces">হেডিং: Noto Serif Bengali + Fraunces<br>বডি: Noto Sans Bengali + Manrope</span>
+      </button>
+      <button class="pair" id="pair-b" data-pair="b" aria-pressed="false">
+        <span class="tag">জোড়া B · আধুনিক</span>
+        <span class="name">Modern Clean</span>
+        <span class="faces">হেডিং: Anek Bangla + Anek Latin<br>বডি: Hind Siliguri + Manrope</span>
+      </button>
+      <button class="pair" id="pair-c" data-pair="c" aria-pressed="false">
+        <span class="tag">জোড়া C · ক্লাসিক</span>
+        <span class="name">Classic Elegant</span>
+        <span class="faces">হেডিং: Tiro Bangla + Cormorant Garamond<br>বডি: Noto Sans Bengali + DM Sans</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="hero" aria-label="হিরো সেকশনের নমুনা">
+    <div class="copy">
+      <span class="eyebrow">নতুন কালেকশন</span>
+      <h2>ঈদ কালেকশন ২০২৬<br>Crafted with Ihsan</h2>
+      <p>হাতে বাছাই করা পাঞ্জাবি, অ্যালকোহল-মুক্ত আতর আর প্রিমিয়াম জায়নামাজ। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।</p>
+      <div class="btns">
+        <button class="btn btn-primary" type="button">এখনই কিনুন</button>
+        <button class="btn btn-ghost" type="button">কালেকশন দেখুন</button>
+      </div>
+    </div>
+    <div class="art" aria-hidden="true">প্রোডাক্ট ছবি</div>
+  </section>
+
+  <section aria-label="প্রোডাক্ট কার্ডের নমুনা">
+    <div class="section-head">
+      <h2>নতুন এসেছে · New Arrivals</h2>
+      <a href="#">সব দেখুন →</a>
+    </div>
+    <div class="grid">
+      <article class="card">
+        <div class="thumb"><span class="badge">নতুন</span></div>
+        <span class="cat">পুরুষ · পাঞ্জাবি</span>
+        <h3>সুতি কাবলি পাঞ্জাবি — অফ হোয়াইট</h3>
+        <div class="price"><strong>৳ ২,৪৫০</strong><s>৳ ২,৯৫০</s></div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="badge">বেস্ট সেলার</span></div>
+        <span class="cat">আতর · ১২ ml</span>
+        <h3>Oud Al Haramain Attar</h3>
+        <div class="price"><strong>৳ ৮৫০</strong></div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="badge">−১৫%</span></div>
+        <span class="cat">নারী · বোরকা</span>
+        <h3>নিদা ফেব্রিক আবায়া সেট</h3>
+        <div class="price"><strong>৳ ৩,২০০</strong><s>৳ ৩,৭৫০</s></div>
+      </article>
+      <article class="card">
+        <div class="thumb"><span class="badge">গিফট</span></div>
+        <span class="cat">ইবাদত সামগ্রী</span>
+        <h3>তুর্কি ভেলভেট জায়নামাজ ও তাসবিহ বক্স</h3>
+        <div class="price"><strong>৳ ১,৯৯০</strong></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="split" aria-label="লেখা আর ফন্ট নমুনা">
+    <div class="article">
+      <span class="eyebrow">ব্লগ · গাইড</span>
+      <h2>আতর কীভাবে ব্যবহার করলে সুগন্ধ বেশিক্ষণ থাকে</h2>
+      <p>আতর লাগানোর সবচেয়ে ভালো জায়গা কব্জি, কানের পেছন আর গলার পাশ, যেখানে শরীরের উষ্ণতা বেশি। গোসলের পর ত্বক একটু আর্দ্র থাকতে লাগালে সুগন্ধ অনেকক্ষণ থাকে। ঘষে না দিয়ে আলতো করে ছুঁয়ে দিন।</p>
+      <p>Apply attar to pulse points right after a shower. Dab, don't rub, so the top notes stay intact through Jumu'ah and beyond.</p>
+    </div>
+    <div class="specimen">
+      <div class="row"><span class="lbl">হেডিং · বড়</span><span class="s-xl">জাযাকাল্লাহু খাইরান</span></div>
+      <div class="row"><span class="lbl">হেডিং · মাঝারি</span><span class="s-l">Ramadan Mubarak · রমজান মোবারক</span></div>
+      <div class="row"><span class="lbl">বডি</span><span class="s-m">অর্ডার কনফার্ম হলে ২৪ ঘণ্টার মধ্যে SMS পাবেন। ঢাকার ভেতরে ডেলিভারি চার্জ ৳৬০।</span></div>
+      <div class="row"><span class="lbl">ছোট লেখা</span><span class="s-s">অর্ডার নম্বর #LJ-10482 · ২৩ অক্টোবর ২০২৬</span></div>
+      <div class="row"><span class="lbl">সংখ্যা</span><span class="s-w"><span>০১২৩৪৫৬৭৮৯</span><span>0123456789</span><span>৳</span></span></div>
+    </div>
+  </section>
+
+  <section class="navdemo" aria-label="মোবাইল বটম মেনুর নমুনা">
+    <span class="eyebrow">মোবাইল স্টিকি মেনু</span>
+    <nav class="bottom-nav" aria-label="নমুনা মেনু">
+      <button type="button"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>ক্যাটাগরি</button>
+      <button type="button"><span class="cart-count"><svg viewBox="0 0 24 24"><path d="M5 7h14l-1.5 11a2 2 0 0 1-2 1.7h-7a2 2 0 0 1-2-1.7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg></span>কার্ট</button>
+      <button type="button" class="home"><span class="disc"><svg viewBox="0 0 24 24"><path d="M4 11l8-6 8 6v8a1 1 0 0 1-1 1h-4v-5h-6v5H5a1 1 0 0 1-1-1z"/></svg></span>হোম</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>সার্চ</button>
+      <button type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>অ্যাকাউন্ট</button>
+    </nav>
+    <p>Food সাইটের বটম মেনুর আইডিয়া, আমাদের রং আর ফন্টে বানানো। মাঝের হোম বাটনটা একটু উঁচু থাকবে।</p>
+  </section>
+
+  <footer>সব ফন্ট Google Fonts থেকে, বিনামূল্যে আর কমার্শিয়াল ব্যবহারের অনুমতিসহ। ধূসর বক্সগুলোতে পরে আসল প্রোডাক্ট ছবি বসবে।</footer>
+</div>
+
+<script>
+  const pairs = document.querySelectorAll('.pair');
+  function choose(p) {
+    document.documentElement.dataset.pair = p;
+    pairs.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pair === p)));
+    try { localStorage.setItem('lj-pair', p); } catch (e) {}
+  }
+  pairs.forEach(b => b.addEventListener('click', () => choose(b.dataset.pair)));
+  try { const saved = localStorage.getItem('lj-pair'); if (saved) choose(saved); } catch (e) {}
+</script>

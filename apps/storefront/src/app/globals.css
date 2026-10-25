@@ -1,0 +1,166 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* Latin face first so mixed bn/en text picks the right glyphs */
+  --font-sans: var(--font-body-latin), var(--font-body-bn), system-ui, sans-serif;
+  --font-heading: var(--font-heading-latin), var(--font-heading-bn), Georgia, serif;
+  --color-gold: var(--gold);
+  --color-placeholder: var(--placeholder);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Looks Jhorna tokens — clean modern minimalism (docs/MASTER_PLAN.md §4).
+   No religious motifs, no cream: neutral off-white base, emerald primary, gold used sparingly. */
+:root {
+  /* Overridden per site from admin → ব্র্যান্ড ও থিম (lib/theme.ts) */
+  --font-heading-latin: var(--font-fraunces);
+  --font-heading-bn: var(--font-noto-serif-bengali);
+  --font-body-latin: var(--font-manrope);
+  --font-body-bn: var(--font-noto-sans-bengali);
+  --background: #F8F8F6;
+  --foreground: #171717;
+  --card: #FFFFFF;
+  --card-foreground: #171717;
+  --popover: #FFFFFF;
+  --popover-foreground: #171717;
+  --primary: #0F4C3A;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EFEFEC;
+  --secondary-foreground: #171717;
+  --muted: #EFEFEC;
+  --muted-foreground: #6B6B68;
+  --accent: #EFEFEC;
+  --accent-foreground: #171717;
+  --gold: #B8975A;
+  --placeholder: #E3E3DF;
+  --destructive: #C4321F;
+  --border: #E6E6E2;
+  --input: #E6E6E2;
+  --ring: #0F4C3A;
+  --chart-1: #0F4C3A;
+  --chart-2: #3E7F68;
+  --chart-3: #B8975A;
+  --chart-4: #6B6B68;
+  --chart-5: #171717;
+  --radius: 0.875rem;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: #0F4C3A;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #EFEFEC;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #E6E6E2;
+  --sidebar-ring: #0F4C3A;
+}
+
+.dark {
+  --background: #121212;
+  --foreground: #EDEDEB;
+  --card: #1B1B1B;
+  --card-foreground: #EDEDEB;
+  --popover: #1B1B1B;
+  --popover-foreground: #EDEDEB;
+  --primary: #4FA383;
+  --primary-foreground: #0E1A14;
+  --secondary: #222222;
+  --secondary-foreground: #EDEDEB;
+  --muted: #222222;
+  --muted-foreground: #A3A3A0;
+  --accent: #222222;
+  --accent-foreground: #EDEDEB;
+  --gold: #D2B47A;
+  --placeholder: #2C2C2C;
+  --destructive: #E5634F;
+  --border: #2E2E2E;
+  --input: #2E2E2E;
+  --ring: #4FA383;
+  --chart-1: #4FA383;
+  --chart-2: #7FC2A8;
+  --chart-3: #D2B47A;
+  --chart-4: #A3A3A0;
+  --chart-5: #EDEDEB;
+  --sidebar: #1B1B1B;
+  --sidebar-foreground: #EDEDEB;
+  --sidebar-primary: #4FA383;
+  --sidebar-primary-foreground: #0E1A14;
+  --sidebar-accent: #222222;
+  --sidebar-accent-foreground: #EDEDEB;
+  --sidebar-border: #2E2E2E;
+  --sidebar-ring: #4FA383;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading;
+    text-wrap: balance;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+/* Rich text from the admin editor */
+.prose-content p { margin-block: 0 1em; }
+.prose-content ul { list-style: disc; padding-left: 1.25em; margin-block: 0 1em; }
+.prose-content ol { list-style: decimal; padding-left: 1.25em; margin-block: 0 1em; }
+.prose-content h2, .prose-content h3 { font-family: var(--font-heading); font-weight: 600; margin-block: 1.4em 0.5em; }
+.prose-content a { color: var(--primary); text-decoration: underline; }
+
+/* Ad landing pages (/l/…) bring their own minimal header and footer, so the shop chrome steps aside.
+   After navigating away, Next keeps the page in the DOM hidden (React Activity sets display: none),
+   so only a visible landing page counts. */
+body:has([data-landing]:not([style*="display: none"])) .site-chrome { display: none; }
+body:has([data-landing]:not([style*="display: none"])) { padding-bottom: 0; }

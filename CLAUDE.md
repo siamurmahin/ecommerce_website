@@ -1,0 +1,47 @@
+# Looks Jhorna — Project Guide
+
+Bangladeshi Islamic-lifestyle e-commerce. Headless: Laravel backend + Filament admin, Next.js storefront.
+Full plan, feature list and roadmap: `docs/MASTER_PLAN.md` — read it before starting any feature.
+
+## Stack
+- `apps/backend` — Laravel 13, PHP 8.4, Filament 5 (admin at `/admin`), Sanctum, spatie/laravel-permission + Filament Shield 4, spatie activitylog + settings. Local DB is SQLite for now; MySQL, Redis/Horizon and Scout + Meilisearch come later.
+- `apps/storefront` — Next.js 16 (App Router, `cacheComponents` on), React 19, TypeScript strict, Tailwind v4, shadcn/ui (base-nova), Motion, GSAP, Lenis, TanStack Query, Zustand, React Hook Form + Zod 4, next-intl (`bn` default, `en`; routing not wired yet). Read `apps/storefront/AGENTS.md` and the bundled Next docs before writing Next code.
+- `packages/api-types` — TS types generated from the backend OpenAPI spec. Never hand-write API types in the storefront.
+
+## Running locally
+Tools live outside Homebrew: PHP/Composer in `~/.config/herd-lite/bin`, Node + pnpm in `~/.local/node/bin` (both on PATH via `~/.zshrc`).
+- Backend: `cd apps/backend && php artisan serve --port=8000` → admin at http://localhost:8000/admin (super admin credentials in `apps/backend/.env`, seeded by `RoleSeeder`)
+- Storefront: `cd apps/storefront && pnpm dev --port 3000`
+- Server tracking events (Meta CAPI, GA4 MP), SMS, fraud checks and courier polling are queued jobs: run `php artisan queue:work` locally. `php artisan schedule:work` runs `courier:sync` (every 30 min), `flash-sales:refresh` (every minute, revalidates the storefront when a sale starts/ends), `carts:remind` (every 10 min, abandoned-cart SMS 9:00–21:00 Dhaka), a 00:01 Dhaka `settings` revalidate (Ramadan mode), `model:prune` and `sanctum:prune-expired` (daily). Production setup: `docs/DEPLOY.md`. Production needs both a queue worker and the scheduler cron. After a deploy that changes an API response shape, clear `apps/storefront/.next/cache` before `pnpm build` or the build may render from stale fetch cache.
+- Tests: `php artisan test`, `pnpm lint && pnpm build`. E2E (Playwright, `apps/storefront/e2e`): build, `pnpm start --port 3100` (no `--hostname`) with the backend on :8000, then `pnpm e2e` (`E2E_BASE_URL` to point elsewhere). The checkout test places real orders from 01700000001 with note "E2E test order" — delete them afterwards locally. CI (`.github/workflows/ci.yml`) runs all of it plus Pint and an API-types drift check.
+- Admin 2FA: authenticator app + recovery codes (Filament MFA, set up under the profile page). Required when `ADMIN_REQUIRE_2FA` is true (defaults to on in production); a super admin can reset someone's 2FA from স্টাফ.
+- Search goes through `App\Domain\Catalog\Search\Contracts\SearchEngine` (driver `SEARCH_DRIVER`, default `database`: every word must match, synonyms from ক্যাটালগ → সার্চ সেটিংস, Levenshtein spelling fallback). `GET /api/v1/search/suggest` feeds the header search box; page-1 searches are logged in `search_queries` (রিপোর্ট → কাস্টমাররা কী খুঁজছে). A Meilisearch driver can be added later behind the same interface.
+- `.claude/launch.json` has both servers for the preview pane. If another tool holds `[::1]:3000`, `localhost:3000` reaches it instead of Next (and backend revalidation misses): open the storefront as `127.0.0.1:3000` (`allowedDevOrigins` allows it).
+- Customer accounts: phone + OTP (`OtpService`, template in Admin → SMS সেটিংস; sent synchronously and even when order SMS is off, via the log gateway locally — code appears in `storage/logs/laravel.log`). The storefront proxies `/api/customer/*` (`app/api/customer/[...path]/route.ts`) and keeps the Sanctum token in the httpOnly `lj_customer` cookie; the browser never sees it. Orders belong to a customer by phone; every ordering phone becomes a `Customer`. Reviews only from customers with a delivered order of that product, approved in admin; `products.rating_avg`/`reviews_count` are cached on the product.
+- Payments are manual for now (`PaymentSettings`, Admin → সেটিংস → পেমেন্ট): COD (optionally with the delivery charge sent in advance) and bKash/Nagad/Rocket numbers; the customer sends money and types a TrxID, the order lands as `payment_status=pending`, staff verify it with the "পেমেন্ট যাচাই" action (`RecordPayment`). `Order::dueOnDelivery()` is what the courier collects. Automatic gateways come later as drivers.
+- Rewards (মার্কেটিং → রিওয়ার্ড ও রেফারেল, `RewardSettings`): points are posted by `PointLedger::syncOrder` on status changes (earned on delivery, reversed on cancel/return); redeeming needs the logged-in customer ordering for their own phone, so the storefront places those orders via `POST /api/customer/orders`. Referral codes go in the coupon box (`CartPricer::referral`), first order only.
+- Stock: every change to `products.stock`/`product_variants.stock` is logged to `stock_movements` by `StockLedger` (model hooks); wrap new stock-changing code in `StockLedger::within(reason, …)` so it gets the right reason instead of "adjustment". Purchase orders add stock when received (`ReceivePurchaseOrder`).
+- Landing-page A/B tests: variants are `landing_pages` rows with `variant_of_id`; `src/proxy.ts` rewrites `/l/{slug}` by `traffic_weight` with a sticky `lj_ab_{slug}` cookie (experiments map cached 60 s in the proxy).
+- Ramadan mode and prayer times: কনটেন্ট → রমজান ও নামাজের সময় (`SeasonalSettings`); prayer times are computed in the browser (`lib/prayer-times.ts`, Karachi 18°, Hanafi) for the city keys in `SeasonalSettings::PRAYER_CITIES` — keep both lists in sync.
+- AI copy: সেটিংস → AI লেখা (`AiSettings`, encrypted key) enables "AI দিয়ে লিখুন" on the product form (`WriteWithAi`); providers implement `App\Domain\Ai\Contracts\Copywriter` and are listed in `config/ai.php` (Claude via the official `anthropic-ai/sdk`).
+- Timestamps are stored in UTC; admin shows `shop.timezone` (Asia/Dhaka) and reports group days in that zone (`App\Domain\Report`). Product feeds for Meta/Google are served at `/feeds/{facebook|google}.xml` (off until enabled in মার্কেটিং → প্রোডাক্ট ফিড).
+- Admin saves refresh the storefront cache via `POST /api/revalidate`; `STOREFRONT_REVALIDATE_SECRET` (backend `.env`) must equal `REVALIDATE_SECRET` (storefront `.env.local`). Don't run `pnpm build` while `pnpm dev` is running — it leaves the dev server serving stale code.
+
+## Rules
+- Domain code lives in `app/Domain/<Module>`. Payment, courier, SMS and tracking providers are drivers behind an interface; add a provider by adding a class, never by branching in controllers.
+- API is versioned: `/api/v1/...`. Breaking changes go to `v2`.
+- Every admin-editable setting must actually drive the storefront (no hardcoded copy, banners, menus or scripts).
+- Every Filament resource/action gets a permission via Shield.
+- Storefront: server components by default; `"use client"` only where interaction is needed. Animate only `transform`/`opacity`, respect `prefers-reduced-motion`, keep reusable motion in `components/motion/`.
+- Product/category pages use ISR; backend calls the storefront revalidate webhook on save.
+- Tracking events (ViewContent, AddToCart, InitiateCheckout, Purchase) fire from browser and server (Meta CAPI) with a shared `event_id`.
+- Route rate limits: always give `throttle:N,M` a third prefix argument (`throttle:10,1,orders`) — without it every throttled route shares one counter per IP, so browsing can exhaust the order limit.
+- BD phone validation: `^01[3-9]\d{8}$`. Money is stored as integer poisha, shown as ৳.
+- UI copy must exist in both `messages/bn.json` and `messages/en.json`.
+
+## Design tokens
+These are the defaults. Admin → সেটিংস → ব্র্যান্ড ও থিম overrides colours, fonts, radius, name and logo at runtime (`lib/theme.ts`, `lib/fonts.ts`); new fonts must be added to both `BrandSettings` and `lib/fonts.ts`. Home page sections come from কনটেন্ট → হোমপেজ বিল্ডার (`HomeSettings`, `HomeSections`). Ad landing pages come from মার্কেটিং → ল্যান্ডিং পেজ (`LandingPage`, `LandingBlocks`), served at `/l/{slug}` without the shop header/footer/bottom nav (`[data-landing]` in `globals.css`); their order form is `CheckoutForm` with its own `lines`, and orders keep `landing_page_id`. Per-page scripts (ট্র্যাকিং → পেজভিত্তিক স্ক্রিপ্ট) render via `components/tracking/page-scripts.tsx`. PWA manifest and icons are generated from brand settings (`app/manifest.ts`, `app/pwa-icons/[file]`).
+Clean modern minimalism. Background neutral off-white `#F8F8F6` (never cream/ivory), surface `#FFFFFF`, text `#171717`, muted `#6B6B68`, border `#E6E6E2`, image placeholder `#E3E3DF`, primary emerald `#0F4C3A`, accent gold `#B8975A` (sparingly).
+No religious motifs in the UI: no geometric/arabesque patterns, arch/mihrab/minaret shapes, or decorative Arabic calligraphy — even though the products are Islamic. Plain rounded corners (14–16px), separation by spacing and white cards.
+Fonts (final, pairing A "Editorial Premium" — see `docs/font-preview.html`): headings `"Fraunces", "Noto Serif Bengali"`, body `"Manrope", "Noto Sans Bengali"`. Latin face first in each stack so mixed bn/en text picks the right glyphs. Load via `next/font`.
+Mobile: sticky floating bottom nav (Category · Cart · raised Home · Search · Account).

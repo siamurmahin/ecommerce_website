@@ -1,0 +1,12 @@
+{
+  "name": "@looks-jhorna/api-types",
+  "version": "0.0.0",
+  "private": true,
+  "types": "./index.d.ts",
+  "scripts": {
+    "generate": "openapi-typescript ./openapi.json -o ./index.d.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.9.1"
+  }
+}
