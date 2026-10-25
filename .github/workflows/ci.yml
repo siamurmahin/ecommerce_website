@@ -68,6 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       APP_ENV: local # seeds the demo catalogue the E2E tests buy from
+      APP_URL: http://127.0.0.1:8000 # image URLs must match NEXT_PUBLIC_ASSET_ORIGIN or next/image answers 400
       STOREFRONT_URL: http://127.0.0.1:3100
       NEXT_PUBLIC_SITE_URL: http://127.0.0.1:3100
       NEXT_PUBLIC_API_URL: http://127.0.0.1:8000/api/v1
