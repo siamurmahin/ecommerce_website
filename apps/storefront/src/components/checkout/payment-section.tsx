@@ -40,7 +40,8 @@ export function PaymentSection({ options, value, onChange, errors, amount, total
   const set = (patch: Partial<PaymentValues>) => onChange({ ...value, ...patch });
   const cod = value.method === "cod";
   const wallet = cod ? wallets.find((w) => w.code === value.wallet) : wallets.find((w) => w.code === value.method);
-  const needsTransfer = amount === null ? cod && options.cod_advance === "delivery" : amount > 0;
+  // Before a district is chosen the amount is unknown, but a wallet payment still shows where to send it.
+  const needsTransfer = amount === null ? !cod || options.cod_advance === "delivery" : amount > 0;
 
   return (
     <section className="flex flex-col gap-4 rounded-lg bg-card p-5 sm:p-6">
