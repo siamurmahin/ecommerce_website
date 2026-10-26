@@ -3873,14 +3873,21 @@
                     "type": {
                         "type": "string",
                         "enum": [
+                            "announcement",
                             "hero",
+                            "trust",
+                            "offer",
+                            "notice",
+                            "checklist",
                             "benefits",
+                            "features",
                             "gallery",
                             "video",
                             "text",
                             "reviews",
                             "faq",
                             "cta",
+                            "call",
                             "order_form"
                         ]
                     },
@@ -3989,6 +3996,39 @@
                                 "image"
                             ]
                         }
+                    },
+                    "packages": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "index": {
+                                    "type": "integer"
+                                },
+                                "label": {
+                                    "type": "string"
+                                },
+                                "badge": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "quantity": {
+                                    "type": "integer"
+                                },
+                                "price": {
+                                    "type": "integer"
+                                }
+                            },
+                            "required": [
+                                "index",
+                                "label",
+                                "badge",
+                                "quantity",
+                                "price"
+                            ]
+                        }
                     }
                 },
                 "required": [
@@ -4004,7 +4044,8 @@
                     "video_url",
                     "ends_at",
                     "show_price",
-                    "items"
+                    "items",
+                    "packages"
                 ],
                 "title": "LandingBlockResource"
             },
@@ -4019,6 +4060,19 @@
                     },
                     "title": {
                         "type": "string"
+                    },
+                    "template": {
+                        "type": "string",
+                        "enum": [
+                            "classic",
+                            "offer",
+                            "minimal",
+                            "story",
+                            "quick",
+                            "bundle",
+                            "showcase",
+                            "elegant"
+                        ]
                     },
                     "indexable": {
                         "type": "string",
@@ -4080,6 +4134,7 @@
                     "id",
                     "slug",
                     "title",
+                    "template",
                     "indexable",
                     "variant_of",
                     "product",
@@ -4530,18 +4585,27 @@
                         "minItems": 1,
                         "maxItems": 50
                     },
+                    "landing_page_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "package": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Position of the chosen package in the landing page's order form.",
+                        "minimum": 0,
+                        "maximum": 20
+                    },
                     "event_id": {
                         "type": [
                             "string",
                             "null"
                         ],
                         "maxLength": 64
-                    },
-                    "landing_page_id": {
-                        "type": [
-                            "integer",
-                            "null"
-                        ]
                     },
                     "utm": {
                         "type": "object",
@@ -5308,6 +5372,21 @@
                         "minItems": 1,
                         "maxItems": 50
                     },
+                    "landing_page_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "package": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Position of the chosen package in the landing page's order form.",
+                        "minimum": 0,
+                        "maximum": 20
+                    },
                     "district_id": {
                         "type": [
                             "integer",
@@ -5451,6 +5530,7 @@
                                 "type": {
                                     "type": "string",
                                     "enum": [
+                                        "package",
                                         "bundle",
                                         "coupon",
                                         "referral",
@@ -5720,6 +5800,21 @@
                         "minItems": 1,
                         "maxItems": 50
                     },
+                    "landing_page_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "package": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Position of the chosen package in the landing page's order form.",
+                        "minimum": 0,
+                        "maximum": 20
+                    },
                     "utm": {
                         "type": "object",
                         "properties": {
@@ -5906,6 +6001,21 @@
                         },
                         "minItems": 1,
                         "maxItems": 50
+                    },
+                    "landing_page_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "package": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Position of the chosen package in the landing page's order form.",
+                        "minimum": 0,
+                        "maximum": 20
                     },
                     "fbp": {
                         "type": [

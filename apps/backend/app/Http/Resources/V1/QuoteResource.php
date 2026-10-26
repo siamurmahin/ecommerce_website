@@ -25,8 +25,8 @@ class QuoteResource extends JsonResource
             'delivery_charge' => $this->deliveryCharge,
             'free_delivery' => $this->freeDelivery,
             'free_delivery_threshold' => $this->freeDeliveryThreshold,
-            /** Bundle, coupon and referral savings, already subtracted from total ('points' only appears on orders). */
-            /** @var array<int, array{type: 'bundle'|'coupon'|'referral'|'points', label: string, amount: int}> */
+            /** Package, bundle, coupon and referral savings, already subtracted from total ('points' only appears on orders). */
+            /** @var array<int, array{type: 'package'|'bundle'|'coupon'|'referral'|'points', label: string, amount: int}> */
             'discounts' => array_map(fn ($d) => $d->toArray(), $this->discounts),
             'discount_total' => $this->discountTotal(),
             'coupon' => $this->coupon ? [

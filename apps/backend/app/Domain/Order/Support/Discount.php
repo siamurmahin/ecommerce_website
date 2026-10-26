@@ -2,9 +2,11 @@
 
 namespace App\Domain\Order\Support;
 
-/** One line of savings on a quote or order (bundle, coupon, referral code, points). */
+/** One line of savings on a quote or order (landing page package, bundle, coupon, referral code, points). */
 final readonly class Discount
 {
+    public const PACKAGE = 'package';
+
     public const BUNDLE = 'bundle';
 
     public const COUPON = 'coupon';

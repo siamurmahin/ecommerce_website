@@ -41,7 +41,7 @@ final class PlaceOrder
      *     name:string, phone:string, email?:string|null, district_id:int, thana_id?:int|null, address:string, note?:string|null,
      *     payment_method:string, payment_wallet?:string|null, payment_sender?:string|null, payment_trx_id?:string|null, items:list<array{product_id:int, variant_id?:int|null, quantity:int}>,
      *     event_id?:string|null, utm?:array<string,string>|null, fbp?:string|null, fbc?:string|null, ttp?:string|null, ttclid?:string|null,
-     *     ga_client_id?:string|null, ga_session_id?:string|null, landing_page_id?:int|null, redeem_points?:int|null
+     *     ga_client_id?:string|null, ga_session_id?:string|null, landing_page_id?:int|null, package?:int|null, redeem_points?:int|null
      * }  $data
      * @param  array{
      *     ip?:string|null, user_agent?:string|null, locale?:string,
@@ -61,7 +61,9 @@ final class PlaceOrder
             throw ValidationException::withMessages(['phone' => 'এই নম্বর থেকে অনলাইনে অর্ডার নেওয়া যাচ্ছে না। অর্ডারের জন্য হটলাইনে কল করুন।']);
         }
 
-        $quote = $this->pricer->quote($data['items'], $data['district_id'], $data['coupon_code'] ?? null, $data['phone']);
+        $landingPage = filled($data['landing_page_id'] ?? null) ? LandingPage::find($data['landing_page_id']) : null;
+        $package = $landingPage?->package(isset($data['package']) ? (int) $data['package'] : null);
+        $quote = $this->pricer->quote($data['items'], $data['district_id'], $data['coupon_code'] ?? null, $data['phone'], $package);
 
         if ($quote->coupon && ! $quote->coupon->applied()) {
             throw ValidationException::withMessages(['coupon_code' => $quote->coupon->message()]);
@@ -101,7 +103,7 @@ final class PlaceOrder
         $total = $quote->subtotal + ($deliveryCharge ?? 0) - $discount;
         $payment = $this->payment($data, $total, $deliveryCharge ?? 0, $context);
 
-        return DB::transaction(function () use ($data, $context, $quote, $deliveryCharge, $thana, $payment, $discount, $discounts, $points, $total) {
+        return DB::transaction(function () use ($data, $context, $landingPage, $quote, $deliveryCharge, $thana, $payment, $discount, $discounts, $points, $total) {
             $order = Order::create([
                 'access_token' => Str::random(40),
                 'status' => $status = $context['status'] ?? OrderStatus::Pending,
@@ -128,7 +130,7 @@ final class PlaceOrder
                 'total' => $total,
                 'source' => $context['source'] ?? OrderSource::Web,
                 // Attribution only: a page deleted or switched off mid-checkout must not block the order.
-                'landing_page_id' => filled($data['landing_page_id'] ?? null) ? LandingPage::whereKey($data['landing_page_id'])->value('id') : null,
+                'landing_page_id' => $landingPage?->id,
                 'internal_note' => $context['internal_note'] ?? null,
                 'locale' => $context['locale'] ?? 'bn',
                 'event_id' => $data['event_id'] ?? null,

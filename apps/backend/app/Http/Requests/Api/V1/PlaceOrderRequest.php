@@ -37,7 +37,6 @@ class PlaceOrderRequest extends FormRequest
             'payment_trx_id' => ['nullable', 'string', 'regex:/^[A-Za-z0-9]{6,30}$/'],
             ...$this->cartItemRules(),
             'event_id' => ['nullable', 'string', 'max:64'],
-            'landing_page_id' => ['nullable', 'integer'],
             'utm' => ['nullable', 'array:utm_source,utm_medium,utm_campaign,utm_content,utm_term'],
             'utm.utm_source' => ['nullable', 'string', 'max:150'],
             'utm.utm_medium' => ['nullable', 'string', 'max:150'],

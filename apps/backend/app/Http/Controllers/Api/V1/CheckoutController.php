@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Marketing\Models\LandingPage;
 use App\Domain\Order\Enums\IncompleteStatus;
 use App\Domain\Order\Enums\PaymentMethod;
 use App\Domain\Order\Models\IncompleteOrder;
@@ -64,7 +65,9 @@ class CheckoutController extends Controller
     /** Re-price a cart against current prices and stock; add district_id to include delivery. */
     public function quote(QuoteCartRequest $request, CartPricer $pricer): QuoteResource
     {
-        return new QuoteResource($pricer->quote($request->validated('items'), $request->validated('district_id'), $request->validated('coupon_code')));
+        $package = LandingPage::find($request->validated('landing_page_id'))?->package($request->validated('package'));
+
+        return new QuoteResource($pricer->quote($request->validated('items'), $request->validated('district_id'), $request->validated('coupon_code'), package: $package));
     }
 
     /**

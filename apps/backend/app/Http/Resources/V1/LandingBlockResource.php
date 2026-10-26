@@ -7,8 +7,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * One landing page block, resolved. Every type shares this shape; fields a type doesn't use are
- * null or empty. Item fields: benefits use icon/title/text, reviews title (name)/meta (place)/
- * rating/text/image (screenshot), FAQ title (question)/text (answer).
+ * null or empty. Item fields: benefits and trust use icon/title/text, reviews title (name)/meta (place)/
+ * rating/text/image (screenshot), FAQ title (question)/text (answer), notice title (one line),
+ * checklist image/title/text, features title/text (one bullet point per line).
+ * Announcement uses title only; offer and call take their price and phone number from the product and settings.
  *
  * @property array<string, mixed> $resource
  */
@@ -20,13 +22,13 @@ class LandingBlockResource extends JsonResource
 
         return [
             'id' => (string) $b['id'],
-            /** @var 'hero'|'benefits'|'gallery'|'video'|'text'|'reviews'|'faq'|'cta'|'order_form' */
+            /** @var 'announcement'|'hero'|'trust'|'offer'|'notice'|'checklist'|'benefits'|'features'|'gallery'|'video'|'text'|'reviews'|'faq'|'cta'|'call'|'order_form' */
             'type' => $b['type'],
             /** @var string|null */
             'title' => $b['title'],
             /** @var string|null */
             'subtitle' => $b['subtitle'],
-            /** Small label above the hero headline, e.g. "সীমিত অফার". */
+            /** Small label above the headline, e.g. "সীমিত অফার". */
             /** @var string|null */
             'badge' => $b['badge'],
             /** @var string|null */
@@ -49,6 +51,9 @@ class LandingBlockResource extends JsonResource
             'show_price' => $b['show_price'],
             /** @var array<int, array{title: string, text: string|null, meta: string|null, icon: string|null, rating: int|null, image: string|null}> */
             'items' => $b['items'],
+            /** Order form packages; send `index` back as `package` with the quote and the order. Price is the package total in poisha. */
+            /** @var array<int, array{index: int, label: string, badge: string|null, quantity: int, price: int}> */
+            'packages' => $b['packages'],
         ];
     }
 }

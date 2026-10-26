@@ -150,7 +150,8 @@
       }
     },
     "referralDiscount": "Referral code {code}",
-    "pointsDiscount": "{points} points"
+    "pointsDiscount": "{points} points",
+    "packageDiscount": "Package: {name}"
   },
   "checkout": {
     "title": "Checkout",
@@ -396,7 +397,17 @@
     "unavailable": "This product isn't available right now. Call us for details.",
     "call": "Call",
     "video": "Video",
-    "rating": "{count} out of 5 stars"
+    "rating": "{count} out of 5 stars",
+    "regularPrice": "Regular price",
+    "offerPrice": "Offer price",
+    "discount": "{percent}% off",
+    "notice": "Please note",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "choosePackage": "Choose a package",
+    "cod": "Cash on delivery"
   },
   "reviews": {
     "title": "Customer reviews",

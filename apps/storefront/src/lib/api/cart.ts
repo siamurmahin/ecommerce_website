@@ -3,9 +3,12 @@ import type { CartItemInput, ProductCard, PlacedOrder, PlaceOrderInput, Quote, S
 
 // Browser-side calls. Never cached: prices and stock must be live.
 
+/** A landing page order: the page, and the order-form package the customer picked (priced by the server). */
+export type LandingQuote = { landing_page_id: number; package: number | null };
+
 /** Prices the cart from the database. */
-export async function quoteCart(items: CartItemInput[], districtId: number | null, locale: string, couponCode: string | null = null) {
-  return (await api<{ data: Quote }>("/cart/quote", { locale, json: { items, district_id: districtId, coupon_code: couponCode } })).data;
+export async function quoteCart(items: CartItemInput[], districtId: number | null, locale: string, couponCode: string | null = null, landing: LandingQuote | null = null) {
+  return (await api<{ data: Quote }>("/cart/quote", { locale, json: { items, district_id: districtId, coupon_code: couponCode, ...landing } })).data;
 }
 
 /** Add-ons for the products in the cart. */

@@ -7,6 +7,8 @@ import { Phone } from "lucide-react";
 import { LandingBlockView } from "@/components/landing/landing-blocks";
 import { LandingView } from "@/components/landing/landing-view";
 import { StickyOrderBar } from "@/components/landing/sticky-order-bar";
+import { lookFor } from "@/components/landing/templates";
+import { Reveal } from "@/components/motion/reveal";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -55,9 +57,19 @@ async function LandingContent({ params }: PageProps<"/[locale]/l/[slug]">) {
   if (!page) notFound();
 
   const hasForm = page.blocks.some((b) => b.type === "order_form");
+  const look = lookFor(page.template);
+  const announcement = page.blocks.find((b) => b.type === "announcement");
+  const blocks = page.blocks.filter((b) => b.type !== "announcement");
+  const hotline = settings.hotline && settings.hotline_tel ? { label: settings.hotline, tel: settings.hotline_tel } : null;
 
   return (
     <>
+      {announcement?.title && (
+        <p data-block="announcement" className="bg-primary px-4 py-2.5 text-center text-xs font-semibold tracking-wide text-primary-foreground sm:text-sm">
+          <span aria-hidden className="mr-2 inline-block size-1.5 -translate-y-px rounded-full bg-gold align-middle" />
+          {announcement.title}
+        </p>
+      )}
       <header className="border-b border-border/70 bg-background/85 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
           <Link href="/" aria-label={settings.brand.name}>
@@ -74,10 +86,18 @@ async function LandingContent({ params }: PageProps<"/[locale]/l/[slug]">) {
       </header>
 
       <LandingView slug={page.slug} />
-      <div className="flex flex-col gap-14 pt-2 pb-16 md:gap-20">
-        {page.blocks.map((block) => (
-          <LandingBlockView key={block.id} block={block} product={page.product} options={options} landingPageId={page.id} />
-        ))}
+      <div data-template={page.template} className={cn("flex flex-col pt-2 pb-16", look.gap)}>
+        {blocks.map((block, i) => {
+          // Story design: blocks alternate between the page colour and full-width white bands; the hero keeps the page colour.
+          const onBand = look.bands && i % 2 === 1;
+          const view = <LandingBlockView block={block} product={page.product} options={options} landingPageId={page.id} look={look} onBand={onBand} hotline={hotline} />;
+          return (
+            <div key={block.id} data-block={block.type} className={cn(look.bands && "py-12 md:py-20", look.bands && i === 0 && "pt-2 md:pt-4", onBand && "bg-card")}>
+              {/* The first block is the page's largest paint, so it isn't held back by an entrance animation. */}
+              {i === 0 ? view : <Reveal>{view}</Reveal>}
+            </div>
+          );
+        })}
       </div>
 
       <footer className="mt-auto border-t border-border/70 py-6 text-center text-xs text-muted-foreground">

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "landing:previews": "node scripts/landing-previews.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

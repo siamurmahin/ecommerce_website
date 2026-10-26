@@ -45,7 +45,9 @@ class OrderInfolist
                                 TextEntry::make('delivery_charge')->label('ডেলিভারি চার্জ')->formatStateUsing($money)->inlineLabel(),
                                 TextEntry::make('discount')->label('ডিসকাউন্ট')->formatStateUsing($money)->inlineLabel()->visible(fn (Order $record) => $record->discount > 0)
                                     ->helperText(fn (Order $record) => collect($record->discounts ?? [])
-                                        ->map(fn ($d) => ($d['type'] === 'coupon' ? 'কুপন ' : 'বান্ডেল: ').$d['label'].' −'.Money::format($d['amount']))->implode(' · ') ?: null),
+                                        ->map(fn ($d) => (match ($d['type']) {
+                                            'coupon' => 'কুপন ', 'package' => 'প্যাকেজ: ', 'referral' => 'রেফারেল ', 'points' => '', default => 'বান্ডেল: '
+                                        }).$d['label'].' −'.Money::format($d['amount']))->implode(' · ') ?: null),
                                 TextEntry::make('total')->label('মোট')->formatStateUsing($money)->inlineLabel()->weight('bold')->size('lg'),
                             ])->extraAttributes(['class' => 'ms-auto max-w-sm']),
                         ]),

@@ -13,6 +13,9 @@ trait CartItemsRules
             'items.*.variant_id' => ['nullable', 'integer'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:100'],
             'items.*.bump_id' => ['nullable', 'integer'],
+            'landing_page_id' => ['nullable', 'integer'],
+            // Position of the chosen package in the landing page's order form.
+            'package' => ['nullable', 'integer', 'min:0', 'max:20'],
         ];
     }
 }

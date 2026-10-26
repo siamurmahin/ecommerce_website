@@ -29,8 +29,9 @@ final class CartPricer
     /**
      * @param  list<array{product_id:int, variant_id?:int|null, quantity:int, bump_id?:int|null}>  $items
      * @param  string|null  $phone  needed for per-phone coupon limits (known at order time)
+     * @param  array{product_id:int, quantity:int, price:int, label:string}|null  $package  a landing page package (see LandingPage::package)
      */
-    public function quote(array $items, ?int $districtId = null, ?string $couponCode = null, ?string $phone = null): Quote
+    public function quote(array $items, ?int $districtId = null, ?string $couponCode = null, ?string $phone = null, ?array $package = null): Quote
     {
         $products = Product::visible()
             ->with(['images', 'variants.attributeValues.attribute', 'category'])
@@ -60,7 +61,9 @@ final class CartPricer
         }
 
         $subtotal = array_sum(array_map(fn (QuoteLine $l) => $l->lineTotal(), $priced));
-        $discounts = $this->bundleDiscounts(array_filter($priced, fn (QuoteLine $l) => ! $l->bumpId));
+        $packageDiscount = $package ? $this->packageDiscount($package, $priced) : null;
+        // A package already sets its own price, so bundle offers don't stack on top of it.
+        $discounts = $packageDiscount ? [$packageDiscount] : $this->bundleDiscounts(array_filter($priced, fn (QuoteLine $l) => ! $l->bumpId));
         $bundleTotal = array_sum(array_map(fn (Discount $d) => $d->amount, $discounts));
 
         $coupon = filled($couponCode) ? $this->coupon($couponCode, $priced, $regularSubtotal, $regularSubtotal - $bundleTotal, $phone) : null;
@@ -126,6 +129,25 @@ final class CartPricer
                 default => null,
             },
         );
+    }
+
+    /**
+     * A package is honoured only when the cart holds exactly its quantity of the page's product; the discount
+     * is the gap between that line's regular total and the package price (nothing if the package costs more).
+     *
+     * @param  array{product_id:int, quantity:int, price:int, label:string}  $package
+     * @param  array<QuoteLine>  $lines
+     */
+    private function packageDiscount(array $package, array $lines): ?Discount
+    {
+        $line = collect($lines)->first(fn (QuoteLine $l) => ! $l->bumpId && $l->productId === $package['product_id']);
+        if (! $line || $line->quantity !== $package['quantity']) {
+            return null;
+        }
+
+        $amount = $line->lineTotal() - $package['price'];
+
+        return $amount > 0 ? new Discount(Discount::PACKAGE, $package['label'], $amount) : null;
     }
 
     /**

@@ -14,7 +14,10 @@ use Illuminate\Support\Facades\Storage;
  */
 final class LandingBlocks
 {
-    public const TYPES = ['hero', 'benefits', 'gallery', 'video', 'text', 'reviews', 'faq', 'cta', 'order_form'];
+    public const TYPES = [
+        'announcement', 'hero', 'trust', 'offer', 'notice', 'checklist', 'benefits', 'features',
+        'gallery', 'video', 'text', 'reviews', 'faq', 'cta', 'call', 'order_form',
+    ];
 
     /** @return list<array<string, mixed>> */
     public static function resolve(LandingPage $page): array
@@ -50,13 +53,15 @@ final class LandingBlocks
                     'rating' => isset($item['rating']) ? max(1, min(5, (int) $item['rating'])) : null,
                     'image' => self::url($item['image'] ?? null),
                 ])->filter(fn (array $item) => $item['title'] !== '' || $item['image'])->values()->all(),
+                'packages' => $type === 'order_form' ? self::packages($data) : [],
             ];
 
             $empty = match ($type) {
                 'gallery' => $resolved['images'] === [],
                 'video' => $resolved['video_url'] === null,
                 'text' => $resolved['content'] === null,
-                'benefits', 'reviews', 'faq' => $resolved['items'] === [],
+                'announcement' => $resolved['title'] === null,
+                'trust', 'notice', 'checklist', 'benefits', 'features', 'reviews', 'faq' => $resolved['items'] === [],
                 default => false,
             };
 
@@ -69,11 +74,30 @@ final class LandingBlocks
             $blocks[] = [
                 'id' => 'order-form', 'type' => 'order_form', 'title' => null, 'subtitle' => null, 'badge' => null,
                 'button_label' => null, 'content' => null, 'image' => null, 'images' => [], 'video_url' => null,
-                'ends_at' => null, 'show_price' => true, 'items' => [],
+                'ends_at' => null, 'show_price' => true, 'items' => [], 'packages' => [],
             ];
         }
 
         return $blocks;
+    }
+
+    /**
+     * Order form packages ("২ সেট — ৳১,২৯৯"), keyed by their position in the form so an order can point back at one.
+     *
+     * @return list<array{index:int, label:string, badge:string|null, quantity:int, price:int}>
+     */
+    public static function packages(array $data): array
+    {
+        return collect($data['packages'] ?? [])->values()
+            ->map(fn (array $p, int $i) => [
+                'index' => $i,
+                'label' => (string) ($p['label'] ?? ''),
+                'badge' => self::text($p['badge'] ?? null),
+                'quantity' => max(1, min(20, (int) ($p['quantity'] ?? 1))),
+                'price' => max(0, (int) ($p['price'] ?? 0)),
+            ])
+            ->filter(fn (array $p) => $p['label'] !== '' && $p['price'] > 0)
+            ->values()->all();
     }
 
     /** YouTube or Facebook video link → privacy-friendly embed URL; anything else is dropped. */

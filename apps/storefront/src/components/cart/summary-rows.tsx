@@ -32,7 +32,9 @@ export function SummaryRows({ subtotal, discounts = [], deliveryCharge, total }:
                 ? t("referralDiscount", { code: d.label })
                 : d.type === "points"
                   ? t("pointsDiscount", { points: d.label })
-                  : t("bundleDiscount", { name: d.label })}
+                  : d.type === "package"
+                    ? t("packageDiscount", { name: d.label })
+                    : t("bundleDiscount", { name: d.label })}
           </dt>
           <dd className="tabular-nums">−{formatTaka(d.amount, locale)}</dd>
         </div>

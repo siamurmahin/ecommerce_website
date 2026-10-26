@@ -42,7 +42,7 @@ export function Gallery({ images, activeImage }: Props) {
       <div className="relative flex-1 overflow-hidden rounded-lg bg-placeholder" ref={emblaRef}>
         <div className="flex">
           {slides.map((img, i) => (
-            <div key={img.url} className="relative aspect-[4/5] min-w-0 flex-[0_0_100%]">
+            <div key={`${i}-${img.url}`} className="relative aspect-[4/5] min-w-0 flex-[0_0_100%]">
               <Image src={img.url} alt={img.alt ?? ""} fill priority={i === 0} sizes="(min-width: 768px) 45vw, 100vw" className="object-cover" />
             </div>
           ))}
@@ -50,7 +50,7 @@ export function Gallery({ images, activeImage }: Props) {
         {slides.length > 1 && (
           <div className="absolute inset-x-0 bottom-4 flex justify-center gap-1.5 md:hidden">
             {slides.map((s, i) => (
-              <span key={s.url} className={cn("h-1.5 rounded-full bg-card transition-all", i === index ? "w-5" : "w-1.5 opacity-60")} />
+              <span key={`${i}-${s.url}`} className={cn("h-1.5 rounded-full bg-card transition-all", i === index ? "w-5" : "w-1.5 opacity-60")} />
             ))}
           </div>
         )}
@@ -59,7 +59,7 @@ export function Gallery({ images, activeImage }: Props) {
       {slides.length > 1 && (
         <ul className="hidden w-20 shrink-0 flex-col gap-3 md:flex">
           {slides.map((img, i) => (
-            <li key={img.url}>
+            <li key={`${i}-${img.url}`}>
               <button
                 type="button"
                 onClick={() => go(i)}

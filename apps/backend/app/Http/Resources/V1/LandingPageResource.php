@@ -4,6 +4,7 @@ namespace App\Http\Resources\V1;
 
 use App\Domain\Marketing\Models\LandingPage;
 use App\Domain\Marketing\Support\LandingBlocks;
+use App\Domain\Marketing\Support\LandingTemplates;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,9 @@ class LandingPageResource extends JsonResource
             'id' => $this->id,
             'slug' => $this->slug,
             'title' => $this->title,
+            /** Ready-made design that sets the page's look. */
+            /** @var 'classic'|'offer'|'minimal'|'story'|'quick'|'bundle'|'showcase'|'elegant' */
+            'template' => LandingTemplates::exists($this->template) ? $this->template : LandingTemplates::DEFAULT,
             /** False keeps the page out of search engines (the default for ad pages). */
             'indexable' => $this->is_indexable && ! $this->isVariant(),
             /** Set on an A/B variant: the main page it is tested against (its canonical URL). */

@@ -37,12 +37,14 @@ type Props = {
   /** Landing page mode: sell these lines instead of the cart (no coupon box, cart left untouched). */
   lines?: CartLine[];
   landingPageId?: number;
+  /** Landing page order-form package (its index), priced by the server. */
+  packageIndex?: number | null;
   /** Rendered above the contact fields, e.g. the landing page's variant and quantity picker. */
   before?: ReactNode;
 };
 
 /** One-page guest checkout (cash on delivery or manual mobile-wallet payment). Totals always come from the server quote. */
-export function CheckoutForm({ options, lines: ownLines, landingPageId, before }: Props) {
+export function CheckoutForm({ options, lines: ownLines, landingPageId, packageIndex = null, before }: Props) {
   const t = useTranslations("checkout");
   const tc = useTranslations("cart");
   const locale = useLocale();
@@ -141,7 +143,8 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, before }
   const [usePoints, setUsePoints] = useState(false);
   const storedCoupon = useCart((s) => s.coupon);
   const coupon = landing ? null : storedCoupon;
-  const { data: quote, refetch, isFetching } = useCartQuote(districtId, bumpItems, ownLines);
+  const landingQuote = useMemo(() => (landingPageId ? { landing_page_id: landingPageId, package: packageIndex } : null), [landingPageId, packageIndex]);
+  const { data: quote, refetch, isFetching } = useCartQuote(districtId, bumpItems, ownLines, landingQuote);
   const offers = [...Object.values(bumps), ...(quote?.bumps ?? []).filter((b) => !bumps[b.id])];
 
   const mutation = useMutation({
@@ -168,6 +171,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, before }
           coupon_code: coupon,
           event_id: (eventId.current ??= crypto.randomUUID()),
           landing_page_id: landingPageId ?? null,
+          package: packageIndex,
           ...readAttribution(),
           ...readGaIds(),
           ...(redeem > 0 ? { redeem_points: redeem } : {}),

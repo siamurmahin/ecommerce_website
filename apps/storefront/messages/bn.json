@@ -150,7 +150,8 @@
       }
     },
     "referralDiscount": "রেফারেল কোড {code}",
-    "pointsDiscount": "{points} পয়েন্ট"
+    "pointsDiscount": "{points} পয়েন্ট",
+    "packageDiscount": "প্যাকেজ ছাড়: {name}"
   },
   "checkout": {
     "title": "চেকআউট",
@@ -396,7 +397,17 @@
     "unavailable": "এই পণ্যটি এখন পাওয়া যাচ্ছে না। বিস্তারিত জানতে আমাদের কল করুন।",
     "call": "কল করুন",
     "video": "ভিডিও",
-    "rating": "৫-এ {count} স্টার"
+    "rating": "৫-এ {count} স্টার",
+    "regularPrice": "রেগুলার মূল্য",
+    "offerPrice": "অফার মূল্য",
+    "discount": "{percent}% ছাড়",
+    "notice": "বিশেষ দ্রষ্টব্য",
+    "days": "দিন",
+    "hours": "ঘণ্টা",
+    "minutes": "মিনিট",
+    "seconds": "সেকেন্ড",
+    "choosePackage": "প্যাকেজ বাছাই করুন",
+    "cod": "ক্যাশ অন ডেলিভারি"
   },
   "reviews": {
     "title": "কাস্টমার রিভিউ",

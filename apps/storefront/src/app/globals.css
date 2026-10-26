@@ -181,5 +181,10 @@
 /* Ad landing pages (/l/…) bring their own minimal header and footer, so the shop chrome steps aside.
    After navigating away, Next keeps the page in the DOM hidden (React Activity sets display: none),
    so only a visible landing page counts. */
+/* Reveal (components/motion/reveal.tsx) starts hidden in the server HTML; reduced motion shows it at once. */
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+}
+
 body:has([data-landing]:not([style*="display: none"])) .site-chrome { display: none; }
 body:has([data-landing]:not([style*="display: none"])) { padding-bottom: 0; }

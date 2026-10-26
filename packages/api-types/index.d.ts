@@ -882,7 +882,7 @@ export interface components {
         LandingBlockResource: {
             id: string;
             /** @enum {string} */
-            type: "hero" | "benefits" | "gallery" | "video" | "text" | "reviews" | "faq" | "cta" | "order_form";
+            type: "announcement" | "hero" | "trust" | "offer" | "notice" | "checklist" | "benefits" | "features" | "gallery" | "video" | "text" | "reviews" | "faq" | "cta" | "call" | "order_form";
             title: string | null;
             subtitle: string | null;
             badge: string | null;
@@ -901,12 +901,21 @@ export interface components {
                 rating: number | null;
                 image: string | null;
             }[];
+            packages: {
+                index: number;
+                label: string;
+                badge: string | null;
+                quantity: number;
+                price: number;
+            }[];
         };
         /** LandingPageResource */
         LandingPageResource: {
             id: number;
             slug: string;
             title: string;
+            /** @enum {string} */
+            template: "classic" | "offer" | "minimal" | "story" | "quick" | "bundle" | "showcase" | "elegant";
             /** @description False keeps the page out of search engines (the default for ad pages). */
             indexable: string;
             variant_of: string | null;
@@ -1032,8 +1041,10 @@ export interface components {
                 quantity: number;
                 bump_id?: number | null;
             }[];
-            event_id?: string | null;
             landing_page_id?: number | null;
+            /** @description Position of the chosen package in the landing page's order form. */
+            package?: number | null;
+            event_id?: string | null;
             utm?: {
                 utm_source?: string | null;
                 utm_medium?: string | null;
@@ -1196,6 +1207,9 @@ export interface components {
                 quantity: number;
                 bump_id?: number | null;
             }[];
+            landing_page_id?: number | null;
+            /** @description Position of the chosen package in the landing page's order form. */
+            package?: number | null;
             district_id?: number | null;
             coupon_code?: string | null;
         };
@@ -1225,7 +1239,7 @@ export interface components {
             free_delivery_threshold: number;
             discounts: {
                 /** @enum {string} */
-                type: "bundle" | "coupon" | "referral" | "points";
+                type: "package" | "bundle" | "coupon" | "referral" | "points";
                 label: string;
                 amount: number;
             }[];
@@ -1280,6 +1294,9 @@ export interface components {
                 quantity: number;
                 bump_id?: number | null;
             }[];
+            landing_page_id?: number | null;
+            /** @description Position of the chosen package in the landing page's order form. */
+            package?: number | null;
             utm?: {
                 utm_source?: string | null;
                 utm_medium?: string | null;
@@ -1320,6 +1337,9 @@ export interface components {
                 quantity: number;
                 bump_id?: number | null;
             }[];
+            landing_page_id?: number | null;
+            /** @description Position of the chosen package in the landing page's order form. */
+            package?: number | null;
             fbp?: string | null;
             fbc?: string | null;
             ttp?: string | null;

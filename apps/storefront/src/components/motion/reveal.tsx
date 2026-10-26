@@ -10,20 +10,19 @@ type Props = {
   as?: "div" | "section" | "li";
 };
 
-/** Fade-up once when scrolled into view. Renders static when the user prefers reduced motion. */
+/**
+ * Fade-up once when scrolled into view. With reduced motion it stays put: `[data-reveal]` in globals.css
+ * overrides the hidden starting style, which the server has already rendered before the preference is known.
+ */
 export function Reveal({ children, className, delay = 0, as = "div" }: Props) {
   const reduce = useReducedMotion();
   const Tag = motion[as];
 
-  if (reduce) {
-    const Static = as;
-    return <Static className={className}>{children}</Static>;
-  }
-
   return (
     <Tag
+      data-reveal
       className={className}
-      initial={{ opacity: 0, y: 18 }}
+      initial={reduce ? false : { opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
       // Start just before the element enters the screen so fast scrolling never shows empty sections.
       viewport={{ once: true, margin: "0px 0px 12% 0px" }}
