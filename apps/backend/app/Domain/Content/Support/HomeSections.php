@@ -7,7 +7,6 @@ use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Marketing\Support\ActiveFlashSales;
 use App\Settings\HomeSettings;
-use App\Settings\SeasonalSettings;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -18,7 +17,7 @@ use Illuminate\Support\Collection;
  */
 final class HomeSections
 {
-    public const TYPES = ['hero', 'trust', 'categories', 'products', 'promo_banners', 'help', 'text', 'prayer_times'];
+    public const TYPES = ['hero', 'trust', 'categories', 'products', 'promo_banners', 'help', 'text'];
 
     public const SOURCES = [
         'featured' => 'বাছাই করা (Featured)',
@@ -70,7 +69,6 @@ final class HomeSections
                 'products' => collect(),
                 'categories' => collect(),
                 'ends_at' => null,
-                'city' => $type === 'prayer_times' ? $this->city($data['city'] ?? null) : null,
             ];
 
             match ($type) {
@@ -124,12 +122,6 @@ final class HomeSections
         }
 
         return $items;
-    }
-
-    /** A prayer-times block's own city, or the site default. */
-    private function city(?string $city): string
-    {
-        return array_key_exists((string) $city, SeasonalSettings::PRAYER_CITIES) ? $city : app(SeasonalSettings::class)->prayer_city;
     }
 
     private function text(array $data, string $field): ?string

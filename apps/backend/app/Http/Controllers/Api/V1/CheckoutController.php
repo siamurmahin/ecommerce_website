@@ -16,6 +16,7 @@ use App\Http\Requests\Api\V1\SaveDraftRequest;
 use App\Http\Resources\V1\DeliveryZoneResource;
 use App\Http\Resources\V1\QuoteLineResource;
 use App\Http\Resources\V1\QuoteResource;
+use App\Settings\GiftSettings;
 use App\Settings\PaymentSettings;
 use App\Settings\ShippingSettings;
 use App\Settings\SmsSettings;
@@ -25,7 +26,7 @@ use Illuminate\Http\Response;
 class CheckoutController extends Controller
 {
     /** Everything the checkout form needs: districts grouped by division, zones, payment methods. */
-    public function options(ShippingSettings $shipping, PaymentSettings $payment): array
+    public function options(ShippingSettings $shipping, PaymentSettings $payment, GiftSettings $gift): array
     {
         $fallback = DeliveryZone::fallback();
         $zones = DeliveryZone::active()->orderBy('sort_order')->get();
@@ -59,6 +60,12 @@ class CheckoutController extends Controller
                 ])->values()->all(),
             /** "delivery": cash-on-delivery orders pay the delivery charge first by one of the wallets. */
             'cod_advance' => $payment->requiresDeliveryAdvance() ? 'delivery' : 'none',
+            /** Gift wrap (price in poisha, added to the total) and gift note, when switched on. */
+            'gift' => [
+                'wrap' => $gift->wrap_enabled,
+                'wrap_price' => $gift->wrap_price,
+                'note' => $gift->note_enabled,
+            ],
         ];
     }
 

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['product_id', 'sku', 'price', 'compare_price', 'stock', 'image', 'is_active', 'sort_order'])]
+#[Fillable(['product_id', 'sku', 'price', 'compare_price', 'cost_price', 'stock', 'image', 'is_active', 'sort_order'])]
 class ProductVariant extends Model
 {
     use RevalidatesStorefront;
@@ -17,6 +17,7 @@ class ProductVariant extends Model
     {
         return [
             'price' => 'integer',
+            'cost_price' => 'integer',
             'compare_price' => 'integer',
             'is_active' => 'boolean',
         ];

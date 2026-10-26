@@ -59,6 +59,10 @@ class OrderAdminTest extends TestCase
         $this->get("/admin/orders/{$this->order->number}/edit")->assertOk();
         $this->get('/admin/delivery-zones')->assertOk()->assertSee('ঢাকা সিটি');
         $this->get('/admin/invoices?orders='.$this->order->number)->assertOk()->assertSee('৳450');
+        $this->get('/admin/invoices?type=slip&orders='.$this->order->number)->assertOk()->assertSee('প্যাকিং স্লিপ')->assertDontSee('সাবটোটাল');
+        $this->get('/admin/cod-reconciliation')->assertOk();
+        $this->get('/admin/order-returns')->assertOk();
+        $this->get('/admin/settings/returns')->assertOk();
     }
 
     public function test_order_manager_sees_orders_but_not_catalog(): void

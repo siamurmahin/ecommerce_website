@@ -11,6 +11,7 @@ use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Enums\PaymentMethod;
 use App\Domain\Order\Enums\PaymentStatus;
 use App\Domain\Order\Support\Inventory;
+use App\Domain\Returns\Models\OrderReturn;
 use App\Domain\Shipping\Models\DeliveryZone;
 use App\Domain\Shipping\Models\District;
 use App\Domain\Shipping\Models\Thana;
@@ -26,9 +27,10 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable([
     'number', 'access_token', 'status', 'payment_method', 'payment_status',
     'payment_wallet', 'payment_sender', 'payment_trx_id', 'advance_amount', 'paid_amount', 'payment_verified_at', 'payment_verified_by', 'payment_note',
+    'cod_expected', 'cod_collected', 'courier_fee', 'cod_settled_at', 'cod_settlement_ref',
     'customer_name', 'customer_phone', 'customer_email', 'district_id', 'district_name', 'thana_id', 'thana_name', 'address',
-    'delivery_zone_id', 'delivery_zone_name', 'customer_note', 'internal_note',
-    'subtotal', 'delivery_charge', 'discount', 'coupon_id', 'coupon_code', 'discounts', 'total',
+    'delivery_zone_id', 'delivery_zone_name', 'customer_note', 'internal_note', 'gift_wrap', 'gift_note', 'gift_wrap_charge', 'gift_wrap_cost',
+    'subtotal', 'delivery_charge', 'delivery_cost', 'discount', 'coupon_id', 'coupon_code', 'discounts', 'total',
     'source', 'landing_page_id', 'locale', 'event_id', 'utm', 'fbp', 'fbc', 'ttp', 'ttclid', 'points_redeemed', 'referrer_id', 'ga_client_id', 'ga_session_id', 'ip', 'user_agent',
 ])]
 class Order extends Model
@@ -46,10 +48,18 @@ class Order extends Model
             'payment_wallet' => PaymentMethod::class,
             'advance_amount' => 'integer',
             'paid_amount' => 'integer',
+            'gift_wrap' => 'boolean',
+            'gift_wrap_charge' => 'integer',
+            'gift_wrap_cost' => 'integer',
+            'cod_expected' => 'integer',
+            'cod_collected' => 'integer',
+            'courier_fee' => 'integer',
+            'cod_settled_at' => 'datetime',
             'payment_verified_at' => 'datetime',
             'source' => OrderSource::class,
             'subtotal' => 'integer',
             'delivery_charge' => 'integer',
+            'delivery_cost' => 'integer',
             'discount' => 'integer',
             'total' => 'integer',
             'utm' => 'array',
@@ -61,6 +71,12 @@ class Order extends Model
     public function dueOnDelivery(): int
     {
         return $this->payment_status === PaymentStatus::Paid ? 0 : max(0, $this->total - $this->paid_amount);
+    }
+
+    /** What the courier owes the shop for this order: the COD it was booked with, else what's still due. */
+    public function codExpected(): int
+    {
+        return $this->cod_expected ?? $this->latestShipment?->cod_amount ?? $this->dueOnDelivery();
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -89,6 +105,11 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function returns(): HasMany
+    {
+        return $this->hasMany(OrderReturn::class)->latest('id');
     }
 
     public function statusHistories(): HasMany

@@ -35,7 +35,7 @@ class OrderInfolist
                                 ])
                                 ->schema([
                                     ImageEntry::make('image')->disk('public')->imageSize(44),
-                                    TextEntry::make('name')->helperText(fn ($record) => collect([$record->variant_label, $record->sku])->filter()->implode(' · ')),
+                                    TextEntry::make('name')->helperText(fn ($record) => collect([$record->preorder ? 'প্রি-অর্ডার' : null, $record->variant_label, $record->sku])->filter()->implode(' · ')),
                                     TextEntry::make('unit_price')->formatStateUsing($money),
                                     TextEntry::make('quantity'),
                                     TextEntry::make('line_total')->formatStateUsing($money)->weight('bold'),
@@ -43,6 +43,7 @@ class OrderInfolist
                             Group::make([
                                 TextEntry::make('subtotal')->label('সাবটোটাল')->formatStateUsing($money)->inlineLabel(),
                                 TextEntry::make('delivery_charge')->label('ডেলিভারি চার্জ')->formatStateUsing($money)->inlineLabel(),
+                                TextEntry::make('gift_wrap_charge')->label('গিফট র‍্যাপ')->formatStateUsing($money)->inlineLabel()->visible(fn (Order $record) => $record->gift_wrap),
                                 TextEntry::make('discount')->label('ডিসকাউন্ট')->formatStateUsing($money)->inlineLabel()->visible(fn (Order $record) => $record->discount > 0)
                                     ->helperText(fn (Order $record) => collect($record->discounts ?? [])
                                         ->map(fn ($d) => (match ($d['type']) {
@@ -124,6 +125,8 @@ class OrderInfolist
                             TextEntry::make('address')->label('ঠিকানা')
                                 ->helperText(fn (Order $record) => collect([$record->thana_name, $record->district_name, $record->delivery_zone_name])->filter()->implode(' · ')),
                             TextEntry::make('customer_note')->label('কাস্টমারের নোট')->placeholder('—'),
+                            TextEntry::make('gift_note')->label('🎁 গিফট র‍্যাপ — কার্ডের লেখা')->placeholder('কার্ডে কিছু লেখা নেই')
+                                ->visible(fn (Order $record) => $record->gift_wrap || $record->gift_note),
                             TextEntry::make('internal_note')->label('ইন্টারনাল নোট')->placeholder('—'),
                         ]),
                     Section::make('সোর্স ও ডিভাইস')

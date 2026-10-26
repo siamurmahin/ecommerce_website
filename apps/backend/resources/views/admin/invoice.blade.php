@@ -92,14 +92,19 @@
         <table class="totals">
             <tr><td class="muted">সাবটোটাল</td><td class="num">{{ $money($order->subtotal) }}</td></tr>
             <tr><td class="muted">ডেলিভারি চার্জ</td><td class="num">{{ $order->delivery_charge ? $money($order->delivery_charge) : 'ফ্রি' }}</td></tr>
+            @if ($order->gift_wrap_charge)
+                <tr><td class="muted">গিফট র‍্যাপ</td><td class="num">{{ $money($order->gift_wrap_charge) }}</td></tr>
+            @endif
             @if ($order->discount)
                 <tr><td class="muted">ডিসকাউন্ট@if ($order->coupon_code) ({{ $order->coupon_code }})@endif</td><td class="num">−{{ $money($order->discount) }}</td></tr>
             @endif
             <tr class="grand"><td>মোট</td><td class="num">{{ $money($order->total) }}</td></tr>
         </table>
 
-        @if ($order->payment_status->value === 'unpaid')
-            <div class="cod"><span>ডেলিভারির সময় পরিশোধ করুন</span><span>{{ $money($order->total) }}</span></div>
+        @if ($order->dueOnDelivery() > 0)
+            <div class="cod"><span>ডেলিভারির সময় পরিশোধ করুন</span><span>{{ $money($order->dueOnDelivery()) }}</span></div>
+        @else
+            <div class="cod"><span>পরিশোধিত</span><span>{{ $money($order->paid_amount) }}</span></div>
         @endif
 
         <footer class="muted">{{ $shop['name'] }} থেকে কেনাকাটার জন্য ধন্যবাদ।</footer>

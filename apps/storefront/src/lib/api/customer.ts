@@ -1,5 +1,5 @@
 import { api, ApiError } from "./client";
-import type { Customer, CustomerAddress, CustomerAddressInput, CustomerOrderPage, OtpSent, PlacedOrder, PlaceOrderInput, PointPage, ProductCard, QuestionPage, RecoveredCart, Review, ReviewPage } from "./types";
+import type { Customer, CustomerAddress, CustomerAddressInput, CustomerOrderPage, OtpSent, PlacedOrder, PlaceOrderInput, PointPage, ProductCard, QuestionPage, RecoveredCart, ReturnReason, ReturnType, Review, ReviewPage } from "./types";
 
 // Signed-in customer calls, through the storefront's own /api/customer proxy (it holds the login cookie).
 
@@ -57,6 +57,17 @@ export const getQuestionPage = (slug: string, page: number, locale: string) =>
 
 export const askQuestion = (slug: string, input: { name: string; phone: string | null; question: string; website?: string }, locale: string) =>
   api<{ message: string }>(`/products/${encodeURIComponent(slug)}/questions`, { json: input, locale });
+
+/** "Tell me when it's back" for an out-of-stock product. */
+export const requestStockAlert = (slug: string, input: { phone: string; variant_id: number | null; website?: string }, locale: string) =>
+  api<{ message: string }>(`/products/${encodeURIComponent(slug)}/stock-alerts`, { json: input, locale });
+
+/** Ask to return or exchange items of a delivered order (order page; needs the order's access token). */
+export const requestReturn = (
+  number: string,
+  input: { token: string; type: ReturnType; reason: ReturnReason; note?: string; items: { order_item_id: number; quantity: number }[] },
+  locale: string,
+) => api<{ id: number; status: string }>(`/orders/${encodeURIComponent(number)}/returns`, { json: input, locale });
 
 export const syncWishlist = async (productIds: number[], locale: string) =>
   (await customerApi<{ data: ProductCard[] }>("wishlist/sync", { json: { product_ids: productIds }, locale })).data;

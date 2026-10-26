@@ -25,9 +25,35 @@ final class Inventory
         $this->refreshStorefront($order);
     }
 
+    /**
+     * Part of an order coming back (a return or exchange of some items).
+     *
+     * @param  iterable<int, int>  $quantities  order_item_id => pieces
+     */
+    public function restockItems(Order $order, iterable $quantities, ?string $note = null): void
+    {
+        $items = $order->items()->get()->keyBy('id');
+
+        StockLedger::within(StockReason::Restock, function () use ($items, $quantities) {
+            foreach ($quantities as $id => $quantity) {
+                $item = $items[$id] ?? null;
+                if (! $item || $item->preorder || $quantity < 1) {
+                    continue;
+                }
+                $row = $item->product_variant_id ? ProductVariant::find($item->product_variant_id) : Product::find($item->product_id);
+                $row?->increment('stock', $quantity);
+                Product::whereKey($item->product_id)->where('sold_count', '>=', $quantity)->decrement('sold_count', $quantity);
+            }
+        }, orderId: $order->id, note: $note ?? $order->number);
+
+        $order->setRelation('items', $items->values());
+        $this->refreshStorefront($order);
+    }
+
     private function take(Order $order): void
     {
-        foreach ($order->items as $item) {
+        // Pre-ordered lines wait for the next shipment; they never came out of stock.
+        foreach ($order->items->reject->preorder as $item) {
             $row = $item->product_variant_id
                 ? ProductVariant::lockForUpdate()->find($item->product_variant_id)
                 : Product::lockForUpdate()->find($item->product_id);
@@ -45,7 +71,7 @@ final class Inventory
 
     private function putBack(Order $order): void
     {
-        foreach ($order->items as $item) {
+        foreach ($order->items->reject->preorder as $item) {
             $row = $item->product_variant_id
                 ? ProductVariant::find($item->product_variant_id)
                 : Product::find($item->product_id);

@@ -30,6 +30,8 @@ class PlaceOrderRequest extends FormRequest
             'coupon_code' => ['nullable', 'string', 'max:40'],
             'address' => ['required', 'string', 'min:8', 'max:500'],
             'note' => ['nullable', 'string', 'max:500'],
+            'gift_wrap' => ['nullable', 'boolean'],
+            'gift_note' => ['nullable', 'string', 'max:300'],
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             // Required by PlaceOrder only when the chosen method needs money sent first.
             'payment_wallet' => ['nullable', Rule::in(array_map(fn (PaymentMethod $m) => $m->value, PaymentMethod::wallets()))],

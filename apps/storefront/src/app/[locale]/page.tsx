@@ -5,7 +5,6 @@ import { CategoryRail } from "@/components/home/category-rail";
 import { HelpBand } from "@/components/home/help-band";
 import { Hero } from "@/components/home/hero";
 import { ProductSection } from "@/components/home/product-section";
-import { PrayerTimes } from "@/components/home/prayer-times";
 import { PromoBanners } from "@/components/home/promo-banners";
 import { TextSection } from "@/components/home/text-section";
 import { TrustStrip } from "@/components/home/trust-strip";
@@ -68,7 +67,5 @@ function Section({ section, banners, settings }: { section: HomeSection; banners
       return <HelpBand title={section.title} note={section.note} settings={settings} />;
     case "text":
       return <TextSection title={section.title} content={section.content} />;
-    case "prayer_times":
-      return <PrayerTimes title={section.title} defaultCity={section.city} offset={settings.prayer.offset} ramadan={settings.ramadan} />;
   }
 }

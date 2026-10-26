@@ -5,6 +5,7 @@ namespace App\Domain\Inventory;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductVariant;
 use App\Domain\Inventory\Enums\StockReason;
+use App\Domain\Inventory\Jobs\NotifyStockAlerts;
 use App\Domain\Inventory\Models\StockMovement;
 use App\Models\User;
 use Closure;
@@ -66,6 +67,12 @@ final class StockLedger
         $model::updated(function (Model $row) {
             if ($row->wasChanged('stock')) {
                 self::record($row, (int) $row->getOriginal('stock'));
+                // Back from zero: tell the customers waiting for it.
+                if ((int) $row->getOriginal('stock') <= 0 && (int) $row->stock > 0) {
+                    $row instanceof ProductVariant
+                        ? NotifyStockAlerts::dispatch($row->product_id, $row->getKey())->afterCommit()
+                        : NotifyStockAlerts::dispatch($row->getKey())->afterCommit();
+                }
             }
         });
     }

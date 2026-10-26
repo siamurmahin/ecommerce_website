@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Domain\Courier\Jobs\SyncShipment;
 use App\Domain\Courier\Models\Shipment;
+use App\Settings\CourierSettings;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -12,8 +13,14 @@ use Illuminate\Console\Command;
 #[Description('Poll couriers for shipments that are still on the way')]
 class SyncShipments extends Command
 {
-    public function handle(): void
+    public function handle(CourierSettings $settings): void
     {
+        if (! $settings->enabled) {
+            $this->info('Courier API is off (সেটিংস → কুরিয়ার).');
+
+            return;
+        }
+
         $count = 0;
 
         Shipment::active()

@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Loader2, LockKeyhole, Truck } from "lucide-react";
+import { Gift, Loader2, LockKeyhole, PenLine, Truck } from "lucide-react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -141,6 +141,9 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
   const [bumps, setBumps] = useState<Record<number, Quote["bumps"][number]>>({});
   const bumpItems: CartItemInput[] = Object.values(bumps).map((b) => ({ product_id: b.product_id, quantity: 1, bump_id: b.id }));
   const [usePoints, setUsePoints] = useState(false);
+  const [giftWrap, setGiftWrap] = useState(false);
+  const [giftNoteOpen, setGiftNoteOpen] = useState(false);
+  const [giftNote, setGiftNote] = useState("");
   const storedCoupon = useCart((s) => s.coupon);
   const coupon = landing ? null : storedCoupon;
   const landingQuote = useMemo(() => (landingPageId ? { landing_page_id: landingPageId, package: packageIndex } : null), [landingPageId, packageIndex]);
@@ -159,6 +162,8 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
           thana_id: values.thana_id ? Number(values.thana_id) : null,
           address: values.address.trim(),
           note: values.note.trim() || null,
+          gift_wrap: options.gift.wrap && giftWrap,
+          gift_note: options.gift.note && giftNoteOpen ? giftNote.trim() || null : null,
           payment_method: payment.method,
           ...(transfer
             ? {
@@ -285,7 +290,8 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
   const redeem = usePoints && ownNumber && !landing ? redeemable : 0;
   const pointsDiscount = redeem * (pointsRules?.point_value ?? 0);
   const discounts = [...(quote?.discounts ?? []), ...(redeem > 0 ? [{ type: "points" as const, label: formatNumber(redeem, locale), amount: pointsDiscount }] : [])];
-  const total = (quote ? quote.total : subtotal + (deliveryCharge ?? 0)) - pointsDiscount;
+  const wrapCharge = options.gift.wrap && giftWrap ? options.gift.wrap_price : 0;
+  const total = (quote ? quote.total : subtotal + (deliveryCharge ?? 0)) - pointsDiscount + wrapCharge;
   const bumpLines = quote?.lines.filter((l) => l.bump_id) ?? [];
   const blocked = quote?.has_problems ?? false;
   const busy = mutation.isPending || placed;
@@ -405,6 +411,38 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
           <Field label={t("note")}>
             {(props) => <input {...props} {...register("note")} placeholder={t("notePlaceholder")} className={inputClass} />}
           </Field>
+          {(options.gift.wrap || options.gift.note) && (
+            <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
+              {options.gift.wrap && (
+                <label className="flex cursor-pointer items-center gap-3 text-[15px]">
+                  <input type="checkbox" checked={giftWrap} onChange={(e) => setGiftWrap(e.target.checked)} className="size-4 accent-primary" />
+                  <Gift className="size-4 text-primary" strokeWidth={1.8} />
+                  <span className="flex-1">{t("giftWrap")}</span>
+                  <span className="text-sm text-muted-foreground tabular-nums">
+                    {options.gift.wrap_price > 0 ? `+${formatTaka(options.gift.wrap_price, locale)}` : t("giftWrapFree")}
+                  </span>
+                </label>
+              )}
+              {options.gift.note && (
+                <label className="flex cursor-pointer items-center gap-3 text-[15px]">
+                  <input type="checkbox" checked={giftNoteOpen} onChange={(e) => setGiftNoteOpen(e.target.checked)} className="size-4 accent-primary" />
+                  <PenLine className="size-4 text-primary" strokeWidth={1.8} />
+                  {t("giftNote")}
+                </label>
+              )}
+              {options.gift.note && giftNoteOpen && (
+                <textarea
+                  value={giftNote}
+                  onChange={(e) => setGiftNote(e.target.value)}
+                  maxLength={300}
+                  rows={2}
+                  aria-label={t("giftNote")}
+                  placeholder={t("giftNotePlaceholder")}
+                  className={cn(inputClass, "h-auto resize-none py-3")}
+                />
+              )}
+            </div>
+          )}
         </section>
 
         <PaymentSection
@@ -481,6 +519,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate text-sm font-medium">{q?.name ?? line.name}</span>
                   {line.variantLabel && <span className="text-xs text-muted-foreground">{line.variantLabel}</span>}
+                  {q?.preorder && <span className="text-xs font-medium text-gold">{t("preorderLine")}</span>}
                   {q?.problem && (
                     <span className="text-xs font-medium text-destructive">
                       {q.problem === "unavailable" ? tc("unavailable") : tc("onlyLeft", { count: formatNumber(q.available, locale) })}
@@ -504,7 +543,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
             </li>
           ))}
         </ul>
-        <SummaryRows subtotal={subtotal} discounts={discounts} deliveryCharge={deliveryCharge} total={total} />
+        <SummaryRows subtotal={subtotal} discounts={discounts} deliveryCharge={deliveryCharge} giftWrap={wrapCharge} total={total} />
         {!landing && <CouponBox quote={quote} loading={isFetching} />}
         {!landing && pointsRules && redeemable > 0 && (
           <label className={cn("flex items-start gap-3 rounded-md border border-border p-3 text-sm", !ownNumber && "opacity-60")}>

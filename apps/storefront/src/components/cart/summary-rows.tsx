@@ -10,10 +10,12 @@ type Props = {
   discounts?: Quote["discounts"];
   /** null = not known yet (no district chosen). */
   deliveryCharge: number | null;
+  /** Gift wrap price, when the customer asked for it (already in `total`). */
+  giftWrap?: number;
   total: number;
 };
 
-export function SummaryRows({ subtotal, discounts = [], deliveryCharge, total }: Props) {
+export function SummaryRows({ subtotal, discounts = [], deliveryCharge, giftWrap = 0, total }: Props) {
   const t = useTranslations("cart");
   const locale = useLocale();
 
@@ -51,6 +53,12 @@ export function SummaryRows({ subtotal, discounts = [], deliveryCharge, total }:
           )}
         </dd>
       </div>
+      {giftWrap > 0 && (
+        <div className="flex justify-between">
+          <dt className="text-muted-foreground">{t("giftWrap")}</dt>
+          <dd className="tabular-nums">{formatTaka(giftWrap, locale)}</dd>
+        </div>
+      )}
       <div className="mt-1 flex items-baseline justify-between border-t border-border pt-3.5">
         <dt className="font-semibold">{t("total")}</dt>
         <dd className="text-xl font-semibold text-primary tabular-nums">{formatTaka(total, locale)}</dd>

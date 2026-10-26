@@ -3,11 +3,10 @@
 namespace App\Domain\Sms;
 
 use App\Domain\Order\Models\Order;
+use App\Domain\Order\Support\OrderPlaceholders;
 use App\Domain\Sms\Contracts\SmsGateway;
 use App\Domain\Sms\Jobs\SendSms;
 use App\Domain\Sms\Models\SmsLog;
-use App\Settings\BrandSettings;
-use App\Settings\SiteSettings;
 use App\Settings\SmsSettings;
 use RuntimeException;
 use Throwable;
@@ -78,19 +77,7 @@ final class SmsSender
 
     public function render(string $body, Order $order): string
     {
-        $site = app(SiteSettings::class);
-        $total = '৳'.number_format($order->total / 100, $order->total % 100 ? 2 : 0);
-        $track = rtrim((string) config('shop.storefront_url'), '/').'/track-order';
-
-        return strtr($body, [
-            '{name}' => $order->customer_name,
-            '{order}' => $order->number,
-            '{total}' => $total,
-            '{phone}' => $order->customer_phone,
-            '{shop}' => app(BrandSettings::class)->name,
-            '{hotline}' => $site->hotline,
-            '{track_url}' => $track,
-        ]);
+        return strtr($body, OrderPlaceholders::for($order));
     }
 
     private function template(string $event): ?string

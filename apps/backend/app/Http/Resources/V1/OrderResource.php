@@ -4,6 +4,9 @@ namespace App\Http\Resources\V1;
 
 use App\Domain\Order\Enums\PaymentStatus;
 use App\Domain\Order\Models\Order;
+use App\Domain\Returns\Models\OrderReturn;
+use App\Settings\ReturnSettings;
+use App\Support\Returns;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -48,6 +51,8 @@ class OrderResource extends JsonResource
             /** @var int|null */
             'eta_max_days' => $this->deliveryZone?->eta_max_days,
             'items' => $this->items->map(fn ($item) => [
+                /** Order item id, for return/exchange requests. */
+                'id' => $item->id,
                 /** @var int|null */
                 'product_id' => $item->product_id,
                 'name' => $item->product?->localized('name') ?? $item->name,
@@ -61,6 +66,10 @@ class OrderResource extends JsonResource
             ]),
             'subtotal' => $this->subtotal,
             'delivery_charge' => $this->delivery_charge,
+            'gift_wrap' => $this->gift_wrap,
+            'gift_wrap_charge' => $this->gift_wrap_charge,
+            /** @var string|null */
+            'gift_note' => $this->gift_note,
             'discount' => $this->discount,
             'total' => $this->total,
             /** Shared with browser pixel events for de-duplication. */
@@ -71,6 +80,17 @@ class OrderResource extends JsonResource
                 'status' => $h->to,
                 'at' => $h->created_at->toIso8601String(),
             ])),
+            /** The customer can ask for a return/exchange now (delivered, inside the window, nothing open). */
+            'returnable' => $this->relationLoaded('statusHistories') && Returns::accepts($this->resource),
+            /** Shown with the return form. */
+            'return_policy' => app()->getLocale() === 'en' ? app(ReturnSettings::class)->policy_en : app(ReturnSettings::class)->policy,
+            /** Return/exchange requests on this order, newest first (only on the order page). */
+            'returns' => ($this->relationLoaded('returns') ? $this->returns : collect())->map(fn (OrderReturn $r) => [
+                'id' => $r->id,
+                'type' => $r->type,
+                'status' => $r->status,
+                'created_at' => $r->created_at->toIso8601String(),
+            ])->values(),
             'created_at' => $this->created_at->toIso8601String(),
         ];
     }

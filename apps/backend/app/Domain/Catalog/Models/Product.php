@@ -8,6 +8,7 @@ use App\Domain\Inventory\Models\StockMovement;
 use App\Domain\Marketing\Models\FlashSaleItem;
 use App\Domain\Marketing\Support\ActiveFlashSales;
 use App\Domain\Review\Models\Review;
+use App\Settings\CostSettings;
 use App\Support\HasLocalizedFields;
 use App\Support\RevalidatesStorefront;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -23,8 +24,8 @@ use Spatie\Activitylog\Support\LogOptions;
 #[Fillable([
     'category_id', 'brand_id', 'name', 'name_en', 'slug', 'sku', 'type',
     'short_description', 'short_description_en', 'description', 'description_en',
-    'price', 'compare_price', 'cost_price', 'stock', 'low_stock_threshold', 'badge',
-    'is_active', 'is_featured', 'free_delivery', 'weight_grams', 'specifications',
+    'price', 'compare_price', 'cost_price', 'extra_costs', 'shared_costs', 'stock', 'low_stock_threshold', 'preorder', 'preorder_note', 'preorder_note_en', 'badge',
+    'is_active', 'is_featured', 'free_delivery', 'owner_pays_delivery', 'delivery_cost', 'weight_grams', 'specifications',
     'meta_title', 'meta_description', 'published_at',
 ])]
 class Product extends Model
@@ -39,13 +40,26 @@ class Product extends Model
             'price' => 'integer',
             'compare_price' => 'integer',
             'cost_price' => 'integer',
+            'extra_costs' => 'array',
+            'shared_costs' => 'boolean',
+            'owner_pays_delivery' => 'boolean',
+            'delivery_cost' => 'integer',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'free_delivery' => 'boolean',
+            'preorder' => 'boolean',
             'specifications' => 'array',
             'published_at' => 'datetime',
             'rating_avg' => 'float',
         ];
+    }
+
+    /** Per-unit costs besides the purchase price: its own (wrapping, carrying…) plus the shop-wide ones, poisha. */
+    public function extraCostPerUnit(CostSettings $settings): int
+    {
+        $own = array_sum(array_map(fn (array $c) => (int) ($c['amount'] ?? 0), $this->extra_costs ?? []));
+
+        return (int) $own + ($this->shared_costs ? $settings->sharedPerUnit() : 0);
     }
 
     public function getActivitylogOptions(): LogOptions

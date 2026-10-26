@@ -7,6 +7,8 @@ use App\Domain\Marketing\Enums\DiscountType;
 use App\Domain\Marketing\Models\FlashSale;
 use App\Filament\Resources\FlashSales\Pages\ManageFlashSales;
 use BackedEnum;
+use Carbon\CarbonInterface;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -17,6 +19,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -46,7 +49,14 @@ class FlashSaleResource extends Resource
             Grid::make(2)->schema([
                 TextInput::make('name')->label('নাম (বাংলা)')->required()->maxLength(100)->placeholder('ঈদ ফ্ল্যাশ সেল'),
                 TextInput::make('name_en')->label('নাম (English)')->maxLength(100),
-                DateTimePicker::make('starts_at')->label('শুরু')->required()->seconds(false)->native(false)->default(now()->startOfHour()->addHour()),
+                DateTimePicker::make('starts_at')->label('শুরু')->required()->seconds(false)->native(false)->default(now()->startOfHour()->addHour())
+                    ->hintAction(Action::make('friday')->label('এই শুক্রবার সারাদিন')->icon(Heroicon::OutlinedCalendarDays)
+                        ->action(function (Set $set) {
+                            $friday = now(config('shop.timezone'))->isFriday() ? now(config('shop.timezone')) : now(config('shop.timezone'))->next(CarbonInterface::FRIDAY);
+                            $set('starts_at', $friday->copy()->startOfDay()->format('Y-m-d H:i'));
+                            $set('ends_at', $friday->copy()->endOfDay()->format('Y-m-d H:i'));
+                            $set('repeats_weekly', true);
+                        })),
                 DateTimePicker::make('ends_at')->label('শেষ')->required()->seconds(false)->native(false)->after('starts_at'),
             ]),
             Repeater::make('items')->label('পণ্য')->relationship()->orderColumn('sort_order')
@@ -63,7 +73,11 @@ class FlashSaleResource extends Resource
                         ->formatStateUsing(fn ($state, Get $get) => $state === null ? null : (self::isPercent($get) ? $state : $state / 100))
                         ->dehydrateStateUsing(fn ($state, Get $get) => self::isPercent($get) ? (int) $state : (int) round($state * 100)),
                 ]),
-            Toggle::make('is_active')->label('চালু')->default(true)->helperText('সময় হলে নিজে থেকে শুরু ও শেষ হবে।'),
+            Grid::make(2)->schema([
+                Toggle::make('is_active')->label('চালু')->default(true)->helperText('সময় হলে নিজে থেকে শুরু ও শেষ হবে।'),
+                Toggle::make('repeats_weekly')->label('প্রতি সপ্তাহে একই দিনে চলবে')
+                    ->helperText('যেমন জুম্মার অফার: শুরু-শেষ এই শুক্রবারে দিন, শেষ হলে নিজে থেকে পরের শুক্রবারে চলে যাবে।'),
+            ]),
         ]);
     }
 
@@ -87,7 +101,8 @@ class FlashSaleResource extends Resource
                         default => 'gray',
                     }),
                 TextColumn::make('starts_at')->label('শুরু')->dateTime('d M, h:i A'),
-                TextColumn::make('ends_at')->label('শেষ')->dateTime('d M, h:i A'),
+                TextColumn::make('ends_at')->label('শেষ')->dateTime('d M, h:i A')
+                    ->description(fn (FlashSale $record) => $record->repeats_weekly ? 'প্রতি সপ্তাহে' : null),
                 TextColumn::make('items_count')->label('পণ্য'),
                 ToggleColumn::make('is_active')->label('চালু'),
             ])

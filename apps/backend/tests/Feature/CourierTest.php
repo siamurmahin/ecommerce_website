@@ -14,6 +14,7 @@ use App\Domain\Order\Actions\PlaceOrder;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Shipping\Models\District;
+use App\Filament\Actions\BookCourierAction;
 use App\Filament\Pages\ManageCourierSettings;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Models\User;
@@ -54,7 +55,7 @@ class CourierTest extends TestCase
             'payment_method' => 'cod', 'items' => [['product_id' => $this->product->id, 'quantity' => 2]],
         ]);
 
-        app(CourierSettings::class)->fill([
+        app(CourierSettings::class)->fill(['enabled' => true,
             'webhook_token' => 'test-webhook-token-123456',
             'steadfast_api_key' => 'sf-key', 'steadfast_secret_key' => 'sf-secret',
             'pathao_client_id' => '7', 'pathao_client_secret' => 'pt-secret', 'pathao_username' => 'shop@example.test',
@@ -223,5 +224,14 @@ class CourierTest extends TestCase
         $this->actingAs(tap(User::factory()->create())->assignRole('order_manager'));
 
         $this->get('/admin/settings/courier')->assertForbidden();
+    }
+
+    public function test_courier_api_off_hides_booking_and_stops_sync_and_webhooks(): void
+    {
+        app(CourierSettings::class)->fill(['enabled' => false])->save();
+
+        $this->assertFalse(BookCourierAction::make()->record($this->order)->isVisible());
+        $this->artisan('courier:sync')->expectsOutputToContain('Courier API is off')->assertSuccessful();
+        $this->postJson('/api/v1/webhooks/courier/steadfast', [])->assertNotFound();
     }
 }

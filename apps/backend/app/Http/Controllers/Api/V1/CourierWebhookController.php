@@ -6,6 +6,7 @@ use App\Domain\Courier\Actions\ApplyShipmentStatus;
 use App\Domain\Courier\CourierManager;
 use App\Domain\Courier\Models\Shipment;
 use App\Http\Controllers\Controller;
+use App\Settings\CourierSettings;
 use Dedoc\Scramble\Attributes\ExcludeRouteFromDocs;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class CourierWebhookController extends Controller
     public function __invoke(Request $request, string $courier, CourierManager $couriers, ApplyShipmentStatus $apply): Response
     {
         abort_unless(array_key_exists($courier, config('courier.couriers')), 404);
+        abort_unless(app(CourierSettings::class)->enabled, 404);
         $driver = $couriers->driver($courier);
 
         try {

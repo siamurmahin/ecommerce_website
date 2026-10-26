@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Settings\BrandSettings;
-use App\Settings\SeasonalSettings;
+use App\Settings\LanguageSettings;
 use App\Settings\SiteSettings;
 
 class SettingsController extends Controller
@@ -27,11 +27,11 @@ class SettingsController extends Controller
      *   announcement: string|null,
      *   footer_about: string|null,
      *   socials: array<int, array{network: 'facebook'|'instagram'|'youtube'|'tiktok', url: string}>,
-     *   ramadan: array{active: bool, starts_on: string|null, ends_on: string|null},
-     *   prayer: array{city: string, offset: int}
+     *   languages: array{mode: 'both'|'en'|'bn', main: 'en'|'bn'},
+     *   hijri: array{show: bool, offset: int}
      * }
      */
-    public function __invoke(SiteSettings $settings, BrandSettings $brand, SeasonalSettings $seasonal): array
+    public function __invoke(SiteSettings $settings, BrandSettings $brand, LanguageSettings $languages): array
     {
         $socials = collect(['facebook', 'instagram', 'youtube', 'tiktok'])
             ->filter(fn (string $network) => filled($settings->{"{$network}_url"}))
@@ -69,16 +69,27 @@ class SettingsController extends Controller
             'whatsapp_url' => $settings->whatsapp ? 'https://wa.me/88'.$settings->whatsapp : null,
             'email' => $settings->email,
             'address' => $settings->localized('address'),
-            // Ramadan mode swaps in its own top-bar message.
-            'announcement' => $seasonal->ramadanActive() && filled($seasonal->announcement()) ? $seasonal->announcement() : $settings->localized('announcement'),
+            'announcement' => $settings->localized('announcement'),
             'footer_about' => $settings->localized('footer_about'),
             'socials' => $socials,
-            'ramadan' => [
-                'active' => $seasonal->ramadanActive(),
-                'starts_on' => $seasonal->ramadan_enabled ? $seasonal->ramadan_starts_on : null,
-                'ends_on' => $seasonal->ramadan_enabled ? $seasonal->ramadan_ends_on : null,
-            ],
-            'prayer' => ['city' => $seasonal->prayer_city, 'offset' => (int) $seasonal->prayer_offset],
+            'languages' => self::languageState($languages),
+            'hijri' => ['show' => $settings->show_hijri_date, 'offset' => $settings->hijri_offset],
         ];
+    }
+
+    /**
+     * Which languages are on; the storefront proxy reads this (cached a minute) to redirect.
+     *
+     * @response array{mode: 'both'|'en'|'bn', main: 'en'|'bn'}
+     */
+    public function languages(LanguageSettings $languages): array
+    {
+        return self::languageState($languages);
+    }
+
+    /** @return array{mode: string, main: string} */
+    private static function languageState(LanguageSettings $languages): array
+    {
+        return ['mode' => $languages->mode, 'main' => $languages->main()];
     }
 }

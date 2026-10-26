@@ -35,6 +35,8 @@ class QuoteLineResource extends JsonResource
             /** Set when this line is a checkout order bump. */
             /** @var int|null */
             'bump_id' => $this->bumpId,
+            /** Ordered beyond stock on a pre-order product. */
+            'preorder' => $this->preorder,
             /** @var 'unavailable'|'insufficient_stock'|null */
             'problem' => $this->problem,
         ];

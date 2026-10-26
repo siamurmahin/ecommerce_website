@@ -6,7 +6,6 @@ use App\Domain\Catalog\Enums\ProductBadge;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Content\Support\HomeSections;
 use App\Settings\HomeSettings;
-use App\Settings\SeasonalSettings;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
@@ -125,12 +124,6 @@ class ManageHomepage extends Page
                             ...$this->pair('title', 'শিরোনাম', 80),
                             ...$this->pair('note', 'লেখা', 200, textarea: true),
                             Text::make('হটলাইন আর WhatsApp নম্বর "সাইট সেটিংস" থেকে আসে।')->columnSpanFull(),
-                        ])->columns(2),
-                        Block::make('prayer_times')->label($this->labelFor('নামাজের সময়'))->icon(Heroicon::OutlinedClock)->maxItems(1)->schema([
-                            $this->enabled(),
-                            ...$this->pair('title', 'শিরোনাম', 80),
-                            Select::make('city')->label('শহর')->options(SeasonalSettings::PRAYER_CITIES)->placeholder('সাইটের ডিফল্ট শহর')->native(false),
-                            Text::make('কাস্টমার নিজের শহর বেছে নিতে পারেন। রমজান মোড চালু থাকলে সেহরি আর ইফতারের কাউন্টডাউন দেখায় (কনটেন্ট → রমজান ও নামাজের সময়)।')->columnSpanFull(),
                         ])->columns(2),
                         Block::make('text')->label($this->labelFor('লেখা / কাস্টম কনটেন্ট'))->icon(Heroicon::OutlinedDocumentText)->schema([
                             $this->enabled(),

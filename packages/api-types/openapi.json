@@ -256,7 +256,7 @@
                 }
             },
             "post": {
-                "operationId": "v1.order.store_41",
+                "operationId": "v1.order.store_45",
                 "summary": "Guest checkout. Returns the order plus an access token for the thank-you page",
                 "tags": [
                     "Order"
@@ -897,6 +897,26 @@
                                                 "delivery",
                                                 "none"
                                             ]
+                                        },
+                                        "gift": {
+                                            "type": "object",
+                                            "description": "Gift wrap (price in poisha, added to the total) and gift note, when switched on.",
+                                            "properties": {
+                                                "wrap": {
+                                                    "type": "boolean"
+                                                },
+                                                "wrap_price": {
+                                                    "type": "integer"
+                                                },
+                                                "note": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "wrap",
+                                                "wrap_price",
+                                                "note"
+                                            ]
                                         }
                                     },
                                     "required": [
@@ -905,7 +925,8 @@
                                         "free_delivery_threshold",
                                         "capture_incomplete",
                                         "payment_methods",
-                                        "cod_advance"
+                                        "cod_advance",
+                                        "gift"
                                     ]
                                 }
                             }
@@ -1323,7 +1344,7 @@
         },
         "/v1/orders": {
             "post": {
-                "operationId": "v1.order.store_25",
+                "operationId": "v1.order.store_28",
                 "summary": "Guest checkout. Returns the order plus an access token for the thank-you page",
                 "tags": [
                     "Order"
@@ -1990,6 +2011,58 @@
                 }
             }
         },
+        "/v1/products/{slug}/bought-together": {
+            "get": {
+                "operationId": "product.boughtTogether",
+                "summary": "\"Customers who bought this also bought\": products that shared an order with this one most often\n(cancelled and returned orders don't count), best first",
+                "tags": [
+                    "Product"
+                ],
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `ProductCardResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/ProductCardResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "category"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/products/{slug}/questions": {
             "get": {
                 "operationId": "productQuestion.index",
@@ -2194,6 +2267,54 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/orders/{number}/returns": {
+            "post": {
+                "operationId": "return.store",
+                "summary": "A customer asks to return or exchange items of a delivered order, from the order page (order number + access token)",
+                "tags": [
+                    "Return"
+                ],
+                "parameters": [
+                    {
+                        "name": "number",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreReturnRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "integer",
+                                    "const": 201
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
@@ -2532,6 +2653,48 @@
                 }
             }
         },
+        "/v1/settings/languages": {
+            "get": {
+                "operationId": "settings.languages",
+                "summary": "Which languages are on; the storefront proxy reads this (cached a minute) to redirect",
+                "tags": [
+                    "Settings"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "mode": {
+                                            "type": "string",
+                                            "enum": [
+                                                "both",
+                                                "en",
+                                                "bn"
+                                            ]
+                                        },
+                                        "main": {
+                                            "type": "string",
+                                            "enum": [
+                                                "en",
+                                                "bn"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "mode",
+                                        "main"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/settings": {
             "get": {
                 "operationId": "v1.settings",
@@ -2710,43 +2873,42 @@
                                                 ]
                                             }
                                         },
-                                        "ramadan": {
+                                        "languages": {
                                             "type": "object",
                                             "properties": {
-                                                "active": {
-                                                    "type": "boolean"
-                                                },
-                                                "starts_on": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
+                                                "mode": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "both",
+                                                        "en",
+                                                        "bn"
                                                     ]
                                                 },
-                                                "ends_on": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
+                                                "main": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "en",
+                                                        "bn"
                                                     ]
                                                 }
                                             },
                                             "required": [
-                                                "active",
-                                                "starts_on",
-                                                "ends_on"
+                                                "mode",
+                                                "main"
                                             ]
                                         },
-                                        "prayer": {
+                                        "hijri": {
                                             "type": "object",
                                             "properties": {
-                                                "city": {
-                                                    "type": "string"
+                                                "show": {
+                                                    "type": "boolean"
                                                 },
                                                 "offset": {
                                                     "type": "integer"
                                                 }
                                             },
                                             "required": [
-                                                "city",
+                                                "show",
                                                 "offset"
                                             ]
                                         }
@@ -2762,8 +2924,8 @@
                                         "announcement",
                                         "footer_about",
                                         "socials",
-                                        "ramadan",
-                                        "prayer"
+                                        "languages",
+                                        "hijri"
                                     ]
                                 }
                             }
@@ -2857,6 +3019,59 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/v1/products/{slug}/stock-alerts": {
+            "post": {
+                "operationId": "stockAlert.store",
+                "summary": "\"Tell me when it's back\" for an out-of-stock product or variant; asking twice keeps one request",
+                "tags": [
+                    "StockAlert"
+                ],
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreStockAlertRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "\u09b8\u09cd\u099f\u0995\u09c7 \u098f\u09b2\u09c7\u0987 SMS-\u098f \u099c\u09be\u09a8\u09be\u09ac\u0964"
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -3703,8 +3918,7 @@
                             "products",
                             "promo_banners",
                             "help",
-                            "text",
-                            "prayer_times"
+                            "text"
                         ]
                     },
                     "title": {
@@ -4277,6 +4491,10 @@
                         "items": {
                             "type": "object",
                             "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "description": "Order item id, for return/exchange requests."
+                                },
                                 "product_id": {
                                     "type": [
                                         "integer",
@@ -4309,6 +4527,7 @@
                                 }
                             },
                             "required": [
+                                "id",
                                 "product_id",
                                 "name",
                                 "variant_label",
@@ -4324,6 +4543,18 @@
                     },
                     "delivery_charge": {
                         "type": "integer"
+                    },
+                    "gift_wrap": {
+                        "type": "boolean"
+                    },
+                    "gift_wrap_charge": {
+                        "type": "integer"
+                    },
+                    "gift_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "discount": {
                         "type": "integer"
@@ -4356,6 +4587,41 @@
                             ]
                         }
                     },
+                    "returnable": {
+                        "type": "string",
+                        "description": "The customer can ask for a return/exchange now (delivered, inside the window, nothing open)."
+                    },
+                    "return_policy": {
+                        "type": "string",
+                        "description": "Shown with the return form."
+                    },
+                    "returns": {
+                        "type": "array",
+                        "description": "Return/exchange requests on this order, newest first (only on the order page).",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "type": {
+                                    "$ref": "#/components/schemas/ReturnType"
+                                },
+                                "status": {
+                                    "$ref": "#/components/schemas/ReturnStatus"
+                                },
+                                "created_at": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "type",
+                                "status",
+                                "created_at"
+                            ]
+                        }
+                    },
                     "created_at": {
                         "type": "string"
                     }
@@ -4382,9 +4648,15 @@
                     "items",
                     "subtotal",
                     "delivery_charge",
+                    "gift_wrap",
+                    "gift_wrap_charge",
+                    "gift_note",
                     "discount",
                     "total",
                     "event_id",
+                    "returnable",
+                    "return_policy",
+                    "returns",
                     "created_at"
                 ],
                 "title": "OrderResource"
@@ -4520,6 +4792,19 @@
                             "null"
                         ],
                         "maxLength": 500
+                    },
+                    "gift_wrap": {
+                        "type": [
+                            "boolean",
+                            "null"
+                        ]
+                    },
+                    "gift_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 300
                     },
                     "payment_method": {
                         "$ref": "#/components/schemas/PaymentMethod"
@@ -5071,6 +5356,16 @@
                     "free_delivery": {
                         "type": "boolean"
                     },
+                    "preorder": {
+                        "type": "boolean",
+                        "description": "Orders are taken beyond the stock on hand."
+                    },
+                    "preorder_note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "specifications": {
                         "type": "array",
                         "items": {
@@ -5315,6 +5610,8 @@
                     "description",
                     "low_stock_threshold",
                     "free_delivery",
+                    "preorder",
+                    "preorder_note",
                     "specifications",
                     "brand",
                     "images",
@@ -5460,6 +5757,10 @@
                             "null"
                         ]
                     },
+                    "preorder": {
+                        "type": "boolean",
+                        "description": "Ordered beyond stock on a pre-order product."
+                    },
                     "problem": {
                         "type": [
                             "string",
@@ -5484,6 +5785,7 @@
                     "available",
                     "line_total",
                     "bump_id",
+                    "preorder",
                     "problem"
                 ],
                 "title": "QuoteLineResource"
@@ -5670,6 +5972,39 @@
                     "has_problems"
                 ],
                 "title": "QuoteResource"
+            },
+            "ReturnReason": {
+                "type": "string",
+                "enum": [
+                    "damaged",
+                    "wrong_item",
+                    "size",
+                    "not_as_described",
+                    "quality",
+                    "changed_mind",
+                    "other"
+                ],
+                "title": "ReturnReason"
+            },
+            "ReturnStatus": {
+                "type": "string",
+                "description": "requested \u2192 approved \u2192 received (stock back) \u2192 completed (refunded / replacement sent); or rejected.\n",
+                "enum": [
+                    "requested",
+                    "approved",
+                    "received",
+                    "completed",
+                    "rejected"
+                ],
+                "title": "ReturnStatus"
+            },
+            "ReturnType": {
+                "type": "string",
+                "enum": [
+                    "return",
+                    "exchange"
+                ],
+                "title": "ReturnType"
             },
             "ReviewResource": {
                 "type": "object",
@@ -5907,6 +6242,56 @@
                 ],
                 "title": "StoreQuestionRequest"
             },
+            "StoreReturnRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "$ref": "#/components/schemas/ReturnType"
+                    },
+                    "reason": {
+                        "$ref": "#/components/schemas/ReturnReason"
+                    },
+                    "note": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1000
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "order_item_id": {
+                                    "type": "integer"
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 100
+                                }
+                            },
+                            "required": [
+                                "order_item_id",
+                                "quantity"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 50
+                    }
+                },
+                "required": [
+                    "token",
+                    "type",
+                    "reason",
+                    "items"
+                ],
+                "title": "StoreReturnRequest"
+            },
             "StoreReviewRequest": {
                 "type": "object",
                 "properties": {
@@ -5944,6 +6329,29 @@
                     "rating"
                 ],
                 "title": "StoreReviewRequest"
+            },
+            "StoreStockAlertRequest": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "pattern": "^01[3-9]\\d{8}$"
+                    },
+                    "variant_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "website": {
+                        "type": "string",
+                        "description": "Honeypot: real visitors never see or fill this."
+                    }
+                },
+                "required": [
+                    "phone"
+                ],
+                "title": "StoreStockAlertRequest"
             },
             "TrackEventRequest": {
                 "type": "object",

@@ -96,7 +96,9 @@ class PurchaseOrderResource extends Resource
                                 ->options(fn (Get $get) => ProductVariant::with('attributeValues.attribute')->where('product_id', $get('product_id'))->get()
                                     ->mapWithKeys(fn (ProductVariant $v) => [$v->id => $v->label() ?: $v->sku])->all())
                                 ->required(fn (Get $get) => ProductVariant::where('product_id', $get('product_id'))->exists())
-                                ->disabled(fn (Get $get) => ! ProductVariant::where('product_id', $get('product_id'))->exists()),
+                                ->disabled(fn (Get $get) => ! ProductVariant::where('product_id', $get('product_id'))->exists())
+                                ->live()
+                                ->afterStateUpdated(fn ($set, $state, Get $get) => $set('unit_cost', Money::toTaka(ProductVariant::find($state)?->cost_price ?? Product::find($get('product_id'))?->cost_price))),
                             TextInput::make('quantity')->hiddenLabel()->numeric()->integer()->minValue(1)->default(1)->required(),
                             Fields::money('unit_cost', '')->hiddenLabel()->required(),
                         ]),

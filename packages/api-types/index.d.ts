@@ -69,7 +69,7 @@ export interface paths {
         get: operations["account.orders"];
         put?: never;
         /** Guest checkout. Returns the order plus an access token for the thank-you page */
-        post: operations["v1.order.store_41"];
+        post: operations["v1.order.store_45"];
         delete?: never;
         options?: never;
         head?: never;
@@ -388,7 +388,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Guest checkout. Returns the order plus an access token for the thank-you page */
-        post: operations["v1.order.store_25"];
+        post: operations["v1.order.store_28"];
         delete?: never;
         options?: never;
         head?: never;
@@ -532,6 +532,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/products/{slug}/bought-together": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** "Customers who bought this also bought": products that shared an order with this one most often
+         *     (cancelled and returned orders don't count), best first */
+        get: operations["product.boughtTogether"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/products/{slug}/questions": {
         parameters: {
             query?: never;
@@ -544,6 +562,23 @@ export interface paths {
         put?: never;
         /** Anyone can ask; it shows up once staff answer it */
         post: operations["productQuestion.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/orders/{number}/returns": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** A customer asks to return or exchange items of a delivered order, from the order page (order number + access token) */
+        post: operations["return.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -619,6 +654,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/settings/languages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Which languages are on; the storefront proxy reads this (cached a minute) to redirect */
+        get: operations["settings.languages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/settings": {
         parameters: {
             query?: never;
@@ -647,6 +699,23 @@ export interface paths {
         get: operations["v1.sitemap"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/products/{slug}/stock-alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** "Tell me when it's back" for an out-of-stock product or variant; asking twice keeps one request */
+        post: operations["stockAlert.store"];
         delete?: never;
         options?: never;
         head?: never;
@@ -851,7 +920,7 @@ export interface components {
         HomeSectionResource: {
             id: string;
             /** @enum {string} */
-            type: "hero" | "trust" | "categories" | "products" | "promo_banners" | "help" | "text" | "prayer_times";
+            type: "hero" | "trust" | "categories" | "products" | "promo_banners" | "help" | "text";
             title: string | null;
             note: string | null;
             eyebrow: string | null;
@@ -960,6 +1029,8 @@ export interface components {
             eta_min_days: number | null;
             eta_max_days: number | null;
             items: {
+                /** @description Order item id, for return/exchange requests. */
+                id: number;
                 product_id: number | null;
                 name: string;
                 variant_label: string | null;
@@ -970,6 +1041,9 @@ export interface components {
             }[];
             subtotal: number;
             delivery_charge: number;
+            gift_wrap: boolean;
+            gift_wrap_charge: number;
+            gift_note: string | null;
             discount: number;
             total: number;
             event_id: string | null;
@@ -977,6 +1051,17 @@ export interface components {
             history?: {
                 status: components["schemas"]["OrderStatus"];
                 at: string;
+            }[];
+            /** @description The customer can ask for a return/exchange now (delivered, inside the window, nothing open). */
+            returnable: string;
+            /** @description Shown with the return form. */
+            return_policy: string;
+            /** @description Return/exchange requests on this order, newest first (only on the order page). */
+            returns: {
+                id: number;
+                type: components["schemas"]["ReturnType"];
+                status: components["schemas"]["ReturnStatus"];
+                created_at: string;
             }[];
             created_at: string;
         };
@@ -1027,6 +1112,8 @@ export interface components {
             coupon_code?: string | null;
             address: string;
             note?: string | null;
+            gift_wrap?: boolean | null;
+            gift_note?: string | null;
             payment_method: components["schemas"]["PaymentMethod"];
             /**
              * @description Required by PlaceOrder only when the chosen method needs money sent first.
@@ -1148,6 +1235,9 @@ export interface components {
             description: string | null;
             low_stock_threshold: number;
             free_delivery: boolean;
+            /** @description Orders are taken beyond the stock on hand. */
+            preorder: boolean;
+            preorder_note: string | null;
             specifications: {
                 label: string;
                 value: string;
@@ -1226,6 +1316,8 @@ export interface components {
             available: number;
             line_total: number;
             bump_id: number | null;
+            /** @description Ordered beyond stock on a pre-order product. */
+            preorder: boolean;
             /** @enum {string|null} */
             problem: "unavailable" | "insufficient_stock" | null;
         };
@@ -1265,6 +1357,23 @@ export interface components {
             total: number;
             has_problems: boolean;
         };
+        /**
+         * ReturnReason
+         * @enum {string}
+         */
+        ReturnReason: "damaged" | "wrong_item" | "size" | "not_as_described" | "quality" | "changed_mind" | "other";
+        /**
+         * ReturnStatus
+         * @description requested → approved → received (stock back) → completed (refunded / replacement sent); or rejected.
+         *
+         * @enum {string}
+         */
+        ReturnStatus: "requested" | "approved" | "received" | "completed" | "rejected";
+        /**
+         * ReturnType
+         * @enum {string}
+         */
+        ReturnType: "return" | "exchange";
         /** ReviewResource */
         ReviewResource: {
             id: number;
@@ -1317,12 +1426,30 @@ export interface components {
             /** @description Honeypot: real visitors never see or fill this. */
             website?: string;
         };
+        /** StoreReturnRequest */
+        StoreReturnRequest: {
+            token: string;
+            type: components["schemas"]["ReturnType"];
+            reason: components["schemas"]["ReturnReason"];
+            note?: string | null;
+            items: {
+                order_item_id: number;
+                quantity: number;
+            }[];
+        };
         /** StoreReviewRequest */
         StoreReviewRequest: {
             product_id: number;
             rating: number;
             body?: string | null;
             images?: string[] | null;
+        };
+        /** StoreStockAlertRequest */
+        StoreStockAlertRequest: {
+            phone: string;
+            variant_id?: number | null;
+            /** @description Honeypot: real visitors never see or fill this. */
+            website?: string;
         };
         /** TrackEventRequest */
         TrackEventRequest: {
@@ -1492,7 +1619,7 @@ export interface operations {
             };
         };
     };
-    "v1.order.store_41": {
+    "v1.order.store_45": {
         parameters: {
             query?: never;
             header?: never;
@@ -1803,6 +1930,12 @@ export interface operations {
                          * @enum {string}
                          */
                         cod_advance: "delivery" | "none";
+                        /** @description Gift wrap (price in poisha, added to the total) and gift note, when switched on. */
+                        gift: {
+                            wrap: boolean;
+                            wrap_price: number;
+                            note: boolean;
+                        };
                     };
                 };
             };
@@ -2032,7 +2165,7 @@ export interface operations {
             };
         };
     };
-    "v1.order.store_25": {
+    "v1.order.store_28": {
         parameters: {
             query?: never;
             header?: never;
@@ -2298,6 +2431,30 @@ export interface operations {
             };
         };
     };
+    "product.boughtTogether": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `ProductCardResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: (components["schemas"]["ProductCardResource"] & Record<string, never>)[];
+                    };
+                };
+            };
+        };
+    };
     "productQuestion.index": {
         parameters: {
             query?: never;
@@ -2373,6 +2530,33 @@ export interface operations {
                     };
                 };
             };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "return.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreReturnRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": 201;
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };
@@ -2501,6 +2685,30 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "settings.languages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        mode: "both" | "en" | "bn";
+                        /** @enum {string} */
+                        main: "en" | "bn";
+                    };
+                };
+            };
+        };
+    };
     "v1.settings": {
         parameters: {
             query?: never;
@@ -2552,13 +2760,14 @@ export interface operations {
                             network: "facebook" | "instagram" | "youtube" | "tiktok";
                             url: string;
                         }[];
-                        ramadan: {
-                            active: boolean;
-                            starts_on: string | null;
-                            ends_on: string | null;
+                        languages: {
+                            /** @enum {string} */
+                            mode: "both" | "en" | "bn";
+                            /** @enum {string} */
+                            main: "en" | "bn";
                         };
-                        prayer: {
-                            city: string;
+                        hijri: {
+                            show: boolean;
                             offset: number;
                         };
                     };
@@ -2597,6 +2806,35 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    "stockAlert.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreStockAlertRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "স্টকে এলেই SMS-এ জানাব।";
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "tracking.config": {

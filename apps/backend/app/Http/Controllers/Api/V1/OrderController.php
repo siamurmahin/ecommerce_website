@@ -45,7 +45,7 @@ class OrderController extends Controller
         $order = Order::where('number', $number)->firstOrFail();
         abort_unless(hash_equals($order->access_token, (string) $request->query('token')), 404);
 
-        return new OrderResource($order->load(['items.product', 'items.variant.attributeValues.attribute', 'district', 'deliveryZone', 'statusHistories']));
+        return new OrderResource($order->load(['items.product', 'items.variant.attributeValues.attribute', 'district', 'deliveryZone', 'statusHistories', 'returns']));
     }
 
     /**

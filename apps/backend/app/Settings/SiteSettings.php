@@ -35,6 +35,12 @@ class SiteSettings extends Settings
 
     public ?string $tiktok_url;
 
+    /** Today's Hijri date in the top bar. */
+    public bool $show_hijri_date;
+
+    /** Days to shift the calculated (Umm al-Qura) Hijri date to match Bangladesh moon sighting, −2…2. */
+    public int $hijri_offset;
+
     public static function group(): string
     {
         return 'site';

@@ -86,6 +86,8 @@ class OrdersTable
                 BulkActionGroup::make([
                     BulkAction::make('printInvoices')->label('ইনভয়েস প্রিন্ট')->icon(Heroicon::OutlinedPrinter)
                         ->action(fn (Collection $records) => redirect()->route('admin.invoices', ['orders' => $records->pluck('number')->implode(',')])),
+                    BulkAction::make('printSlips')->label('প্যাকিং স্লিপ প্রিন্ট')->icon(Heroicon::OutlinedClipboardDocumentList)
+                        ->action(fn (Collection $records) => redirect()->route('admin.invoices', ['orders' => $records->pluck('number')->implode(','), 'type' => 'slip'])),
                     BookCourierAction::bulk(),
                     BulkAction::make('confirm')->label('কনফার্ম করুন')->icon(Heroicon::OutlinedCheck)
                         ->requiresConfirmation()

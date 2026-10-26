@@ -9,12 +9,15 @@ use App\Domain\Catalog\Search\Contracts\SearchEngine;
 use App\Domain\Catalog\Search\SearchText;
 use App\Domain\Marketing\Models\Bundle;
 use App\Domain\Marketing\Support\ActiveFlashSales;
+use App\Domain\Order\Enums\OrderStatus;
+use App\Domain\Report\SalesReport;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\ProductCardResource;
 use App\Http\Resources\V1\ProductResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -152,5 +155,32 @@ class ProductController extends Controller
             ->get();
 
         return ProductCardResource::collection($related);
+    }
+
+    /**
+     * "Customers who bought this also bought": products that shared an order with this one most often
+     * (cancelled and returned orders don't count), best first.
+     */
+    public function boughtTogether(string $slug): AnonymousResourceCollection
+    {
+        $product = Product::visible()->where('slug', $slug)->firstOrFail();
+        $lost = array_map(fn (OrderStatus $s) => $s->value, SalesReport::LOST);
+
+        $ids = DB::table('order_items as mine')
+            ->join('order_items as other', 'other.order_id', '=', 'mine.order_id')
+            ->join('orders', 'orders.id', '=', 'mine.order_id')
+            ->where('mine.product_id', $product->id)
+            ->where('other.product_id', '!=', $product->id)
+            ->whereNotIn('orders.status', $lost)
+            ->whereNull('orders.deleted_at')
+            ->groupBy('other.product_id')
+            ->orderByRaw('count(distinct other.order_id) desc')
+            ->limit(12)
+            ->pluck('other.product_id');
+
+        $products = Product::visible()->with(self::CARD_RELATIONS)->whereKey($ids)->get()
+            ->sortBy(fn (Product $p) => $ids->search($p->id))->take(8)->values();
+
+        return ProductCardResource::collection($products);
     }
 }

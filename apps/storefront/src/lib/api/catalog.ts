@@ -78,3 +78,11 @@ export async function getRelated(slug: string, locale: string) {
   cacheTag("catalog", `product:${slug}`);
   return (await api<{ data: ProductCard[] }>(`/products/${encodeURIComponent(slug)}/related`, { locale })).data;
 }
+
+/** "Customers who bought this also bought" — products that shared orders with this one. */
+export async function getBoughtTogether(slug: string, locale: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("catalog", `product:${slug}`);
+  return (await api<{ data: ProductCard[] }>(`/products/${encodeURIComponent(slug)}/bought-together`, { locale })).data;
+}

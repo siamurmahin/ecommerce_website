@@ -7,6 +7,9 @@ use Spatie\LaravelSettings\Settings;
 /** Courier credentials and fraud-check options, edited under সেটিংস → কুরিয়ার. */
 class CourierSettings extends Settings
 {
+    /** Courier API on/off: booking, status polling and webhooks all stop while it's off. */
+    public bool $enabled;
+
     /** Key from config('courier.couriers'), preselected in the booking dialog. */
     public ?string $default_courier;
 

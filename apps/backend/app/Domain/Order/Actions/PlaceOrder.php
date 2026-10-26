@@ -3,6 +3,7 @@
 namespace App\Domain\Order\Actions;
 
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Finance\Support\DeliveryCost;
 use App\Domain\Marketing\Models\Coupon;
 use App\Domain\Marketing\Models\LandingPage;
 use App\Domain\Order\Enums\OrderSource;
@@ -20,6 +21,7 @@ use App\Domain\Reward\PointLedger;
 use App\Domain\Shipping\Models\Thana;
 use App\Domain\Tracking\ServerEvent;
 use App\Domain\Tracking\ServerTracker;
+use App\Settings\GiftSettings;
 use App\Settings\PaymentSettings;
 use App\Settings\RewardSettings;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +36,7 @@ final class PlaceOrder
         private ServerTracker $tracker,
         private RewardSettings $rewards,
         private PointLedger $ledger,
+        private DeliveryCost $deliveryCost,
     ) {}
 
     /**
@@ -100,10 +103,13 @@ final class PlaceOrder
             $discount += $value;
             $discounts[] = new Discount(Discount::POINTS, $points.' পয়েন্ট', $value);
         }
-        $total = $quote->subtotal + ($deliveryCharge ?? 0) - $discount;
+        $gift = app(GiftSettings::class);
+        $wrap = $gift->wrap_enabled && ! empty($data['gift_wrap']);
+        $wrapCharge = $wrap ? $gift->wrap_price : 0;
+        $total = $quote->subtotal + ($deliveryCharge ?? 0) + $wrapCharge - $discount;
         $payment = $this->payment($data, $total, $deliveryCharge ?? 0, $context);
 
-        return DB::transaction(function () use ($data, $context, $landingPage, $quote, $deliveryCharge, $thana, $payment, $discount, $discounts, $points, $total) {
+        return DB::transaction(function () use ($data, $context, $landingPage, $quote, $deliveryCharge, $thana, $payment, $discount, $discounts, $points, $total, $gift, $wrap, $wrapCharge) {
             $order = Order::create([
                 'access_token' => Str::random(40),
                 'status' => $status = $context['status'] ?? OrderStatus::Pending,
@@ -119,6 +125,10 @@ final class PlaceOrder
                 'delivery_zone_id' => $quote->zone?->id,
                 'delivery_zone_name' => $quote->zone?->name,
                 'customer_note' => $data['note'] ?? null,
+                'gift_wrap' => $wrap,
+                'gift_note' => $gift->note_enabled && filled($data['gift_note'] ?? null) ? trim($data['gift_note']) : null,
+                'gift_wrap_charge' => $wrapCharge,
+                'gift_wrap_cost' => $wrap ? $gift->wrap_cost : 0,
                 'subtotal' => $quote->subtotal,
                 'delivery_charge' => $deliveryCharge ?? 0,
                 'discount' => $discount,
@@ -157,10 +167,12 @@ final class PlaceOrder
                     'image' => $line->imagePath(),
                     'unit_price' => $line->unitPrice,
                     'quantity' => $line->quantity,
+                    'preorder' => $line->preorder,
                     'line_total' => $line->lineTotal(),
                     'order_bump_id' => $line->bumpId,
                 ]);
             }
+            DeliveryCost::allocate($order, $this->deliveryCost->for($quote, $deliveryCharge ?? 0));
 
             if ($coupon = $quote->coupon?->coupon) {
                 // Atomic so two last-minute orders can't both take the final use.

@@ -22,6 +22,9 @@ class RefreshFlashSales extends Command
             ->where(fn ($q) => $q->whereBetween('starts_at', [$since, $now])->orWhereBetween('ends_at', [$since, $now]))
             ->exists();
 
+        // Weekly sales (জুম্মার অফার) that just ended move on to next week.
+        FlashSale::where('is_active', true)->where('repeats_weekly', true)->where('ends_at', '<=', $now)->get()->each->rollForward();
+
         Cache::put('flash-sales:last-refresh', $now, now()->addDay());
 
         if ($changed) {

@@ -11,11 +11,12 @@ import type { DeliveryZone, Product, SiteSettings } from "@/lib/api/types";
 import { formatNumber, formatTaka } from "@/lib/format";
 import { track } from "@/lib/tracking";
 import { cn } from "@/lib/utils";
-import { useCart } from "@/stores/cart";
+import { PREORDER_MAX, useCart } from "@/stores/cart";
 import { useUi } from "@/stores/ui";
 import { Countdown } from "@/components/commerce/countdown";
 import { Stars } from "@/components/reviews/stars";
 import { Gallery } from "./gallery";
+import { StockAlert } from "./stock-alert";
 import { useVariantSelection, VariantOptions } from "./variant-picker";
 
 type Props = {
@@ -42,6 +43,10 @@ export function ProductPurchase({ product, zones, compact = false, onDone, conta
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const low = stock > 0 && stock <= product.low_stock_threshold;
+  // Pre-order products keep selling past the stock on hand, up to the API's cap.
+  const maxQty = product.preorder ? Math.max(stock, PREORDER_MAX) : stock;
+  const preordering = product.preorder && qty > stock;
+  const soldOut = maxQty === 0;
 
   // Once per product shown (full page or quick view); the ref also absorbs Strict Mode's re-run.
   const viewed = useRef<number | null>(null);
@@ -64,7 +69,8 @@ export function ProductPurchase({ product, zones, compact = false, onDone, conta
         variantLabel: variant?.label ?? null,
         image: variant?.image ?? product.image,
         price,
-        maxQuantity: stock,
+        maxQuantity: maxQty,
+        preorder: product.preorder,
       },
       qty,
     );
@@ -133,13 +139,21 @@ export function ProductPurchase({ product, zones, compact = false, onDone, conta
 
         <VariantOptions product={product} selection={selection} />
 
-        <p className={cn("text-sm font-medium", stock === 0 ? "text-destructive" : low ? "text-gold" : "text-primary")}>
-          {stock === 0
-            ? t("outOfStock")
-            : low
-              ? t("lowStock", { count: formatNumber(stock, locale) })
-              : t("inStock", { count: formatNumber(stock, locale) })}
-        </p>
+        {stock === 0 && product.preorder ? (
+          <div className="flex flex-col gap-1 rounded-lg bg-gold/10 px-3.5 py-2.5">
+            <span className="text-sm font-bold text-gold">{t("preorderOpen")}</span>
+            {product.preorder_note && <span className="text-sm text-foreground/80">{product.preorder_note}</span>}
+          </div>
+        ) : (
+          <p className={cn("text-sm font-medium", stock === 0 ? "text-destructive" : low ? "text-gold" : "text-primary")}>
+            {stock === 0
+              ? t("outOfStock")
+              : low
+                ? t("lowStock", { count: formatNumber(stock, locale) })
+                : t("inStock", { count: formatNumber(stock, locale) })}
+          </p>
+        )}
+        {preordering && stock > 0 && <p className="-mt-3 text-sm text-gold">{t("preorderBeyond", { count: formatNumber(stock, locale) })}</p>}
 
         <div className="flex flex-col gap-3">
           <div className="flex gap-3">
@@ -148,14 +162,14 @@ export function ProductPurchase({ product, zones, compact = false, onDone, conta
                 <Minus className="size-4" />
               </button>
               <span className="w-8 text-center tabular-nums">{formatNumber(qty, locale)}</span>
-              <button type="button" onClick={() => setQty((q) => Math.min(Math.max(stock, 1), q + 1))} className="grid h-full w-11 place-items-center" aria-label="+">
+              <button type="button" onClick={() => setQty((q) => Math.min(Math.max(maxQty, 1), q + 1))} className="grid h-full w-11 place-items-center" aria-label="+">
                 <Plus className="size-4" />
               </button>
             </div>
             <Button
               size="lg"
               variant="outline"
-              disabled={stock === 0}
+              disabled={soldOut}
               onClick={() => {
                 addToCart();
                 openCart(true);
@@ -171,7 +185,7 @@ export function ProductPurchase({ product, zones, compact = false, onDone, conta
           </div>
           <Button
             size="lg"
-            disabled={stock === 0}
+            disabled={soldOut}
             onClick={() => {
               addToCart();
               onDone?.();
@@ -179,8 +193,9 @@ export function ProductPurchase({ product, zones, compact = false, onDone, conta
             }}
             className="h-12 rounded-full text-[15px]"
           >
-            {t("buyNow")}
+            {preordering ? t("preorderNow") : t("buyNow")}
           </Button>
+          {soldOut && !compact && <StockAlert slug={product.slug} variantId={variant?.id ?? null} />}
           {!compact && contact && (
           <div className="grid grid-cols-2 gap-3">
             {contact.whatsapp_url && (

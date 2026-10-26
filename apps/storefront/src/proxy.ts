@@ -34,7 +34,44 @@ function pick(pages: Experiments[string]): string {
   return pages[0].slug;
 }
 
+// Languages on (সেটিংস → ভাষা): "both" sends first-time visitors to the main language, a single language
+// sends every other-language link there. Landing pages (/l/…) open in the language of their link.
+
+type Languages = { mode: "both" | "en" | "bn"; main: "en" | "bn" };
+let languagesCache: { at: number; data: Languages } | null = null;
+
+async function languages(): Promise<Languages> {
+  if (languagesCache && Date.now() - languagesCache.at < TTL) return languagesCache.data;
+  try {
+    const res = await fetch(`${API_URL}/settings/languages`, { headers: { Accept: "application/json" }, cache: "no-store" });
+    languagesCache = { at: Date.now(), data: res.ok ? ((await res.json()) as Languages) : (languagesCache?.data ?? { mode: "both", main: "bn" }) };
+  } catch {
+    languagesCache = { at: Date.now(), data: languagesCache?.data ?? { mode: "both", main: "bn" } };
+  }
+  return languagesCache.data;
+}
+
+/** Set by the language switch when a visitor picks a language themselves. */
+const LANGUAGE_COOKIE = "lj_lang";
+
+function languageRedirect(request: NextRequest, { mode, main }: Languages): NextResponse | null {
+  const { pathname } = request.nextUrl;
+  if (/^(\/en)?\/l\//.test(pathname)) return null;
+
+  const english = pathname === "/en" || pathname.startsWith("/en/");
+  const chosen = request.cookies.get(LANGUAGE_COOKIE)?.value;
+  const target = mode !== "both" ? mode : chosen === "en" || chosen === "bn" ? null : main;
+  if (!target || (target === "en") === english) return null;
+
+  const url = request.nextUrl.clone();
+  url.pathname = target === "en" ? `/en${pathname === "/" ? "" : pathname}` : pathname.slice(3) || "/";
+  return NextResponse.redirect(url, 307);
+}
+
 export default async function proxy(request: NextRequest) {
+  const redirect = languageRedirect(request, await languages());
+  if (redirect) return redirect;
+
   const match = request.nextUrl.pathname.match(/^(\/en)?\/l\/([^/]+)\/?$/);
   const pages = match ? (await experiments())[decodeURIComponent(match[2])] : undefined;
   if (!match || !pages) return intl(request);

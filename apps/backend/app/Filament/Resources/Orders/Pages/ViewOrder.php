@@ -4,11 +4,15 @@ namespace App\Filament\Resources\Orders\Pages;
 
 use App\Domain\Courier\Jobs\SyncShipment;
 use App\Domain\Customer\Models\Customer;
+use App\Domain\Order\Enums\OrderStatus;
+use App\Domain\Returns\Enums\ReturnStatus;
+use App\Domain\Returns\Models\OrderReturn;
 use App\Filament\Actions\BookCourierAction;
 use App\Filament\Actions\ChangeStatusAction;
 use App\Filament\Actions\FraudCheckAction;
 use App\Filament\Actions\PaymentAction;
 use App\Filament\Resources\Customers\CustomerResource;
+use App\Filament\Resources\OrderReturns\OrderReturnResource;
 use App\Filament\Resources\Orders\OrderResource;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
@@ -40,8 +44,23 @@ class ViewOrder extends ViewRecord
                     $this->refreshFormData(['status']);
                 }),
             FraudCheckAction::make(),
+            Action::make('return')->label('রিটার্ন / এক্সচেঞ্জ')->icon(Heroicon::OutlinedArrowUturnLeft)->color('gray')
+                ->visible(fn () => in_array($this->record->status, [OrderStatus::Delivered, OrderStatus::Shipped], true) && OrderReturnResource::canViewAny())
+                ->authorize(fn () => auth()->user()?->can('create', OrderReturn::class))
+                ->schema(fn () => OrderReturnResource::requestFields($this->record->loadMissing('items')))
+                ->action(function (array $data) {
+                    OrderReturn::create([
+                        ...$data, 'order_id' => $this->record->id, 'items' => array_values($data['items']),
+                        'status' => ReturnStatus::Approved, 'source' => 'staff', 'user_id' => auth()->id(),
+                    ]);
+                    Notification::make()->success()->title('রিটার্ন/এক্সচেঞ্জ খোলা হয়েছে')
+                        ->body('পণ্য ফেরত এলে "রিটার্ন ও এক্সচেঞ্জ" থেকে গ্রহণ করুন।')->send();
+                }),
             Action::make('invoice')->label('ইনভয়েস প্রিন্ট')->icon(Heroicon::OutlinedPrinter)->color('gray')
                 ->url(fn () => route('admin.invoices', ['orders' => $this->record->number]))
+                ->openUrlInNewTab(),
+            Action::make('slip')->label('প্যাকিং স্লিপ')->icon(Heroicon::OutlinedClipboardDocumentList)->color('gray')
+                ->url(fn () => route('admin.invoices', ['orders' => $this->record->number, 'type' => 'slip']))
                 ->openUrlInNewTab(),
             Action::make('call')->label('কল করুন')->icon(Heroicon::OutlinedPhone)->color('gray')
                 ->url(fn () => 'tel:'.$this->record->customer_phone),

@@ -32,9 +32,9 @@ class RolePermissionTest extends TestCase
             'order_manager' => ['allowed' => ['/admin/orders', '/admin/sms-logs', '/admin/incomplete-orders'], 'denied' => ['/admin/settings/courier', '/admin/banners', '/admin/settings/brand', '/admin/users']],
             'warehouse' => ['allowed' => ['/admin/orders', '/admin/products'], 'denied' => ['/admin/categories', '/admin/homepage']],
             'catalog_manager' => ['allowed' => ['/admin/products', '/admin/categories', '/admin/brands'], 'denied' => ['/admin/orders', '/admin/settings/tracking']],
-            'marketer' => ['allowed' => ['/admin/banners', '/admin/homepage', '/admin/settings/tracking', '/admin/coupons', '/admin/flash-sales'], 'denied' => ['/admin/users', '/admin/settings/sms']],
+            'marketer' => ['allowed' => ['/admin/banners', '/admin/homepage', '/admin/settings/tracking', '/admin/coupons', '/admin/flash-sales'], 'denied' => ['/admin/users', '/admin/expenses', '/admin/settings/sms']],
             'content_editor' => ['allowed' => ['/admin/pages', '/admin/menu-items', '/admin/homepage'], 'denied' => ['/admin/orders', '/admin/settings/brand']],
-            'manager' => ['allowed' => ['/admin/orders', '/admin/settings/brand', '/admin/settings/sms', '/admin/homepage'], 'denied' => ['/admin/users', '/admin/shield/roles']],
+            'manager' => ['allowed' => ['/admin/orders', '/admin/expenses', '/admin/settings/brand', '/admin/settings/sms', '/admin/homepage'], 'denied' => ['/admin/users', '/admin/shield/roles']],
         ];
 
         foreach ($matrix as $role => $paths) {

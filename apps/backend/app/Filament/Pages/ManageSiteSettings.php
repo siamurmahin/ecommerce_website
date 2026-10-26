@@ -7,8 +7,10 @@ use App\Support\Phone;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
@@ -16,6 +18,7 @@ use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
@@ -67,6 +70,11 @@ class ManageSiteSettings extends Page
                         TextInput::make('announcement_en')->label('টপ বারের লেখা (English)')->maxLength(120),
                         Textarea::make('footer_about')->label('ফুটারের পরিচিতি (বাংলা)')->rows(3)->maxLength(300),
                         Textarea::make('footer_about_en')->label('ফুটারের পরিচিতি (English)')->rows(3)->maxLength(300),
+                        Toggle::make('show_hijri_date')->label('টপ বারে আজকের হিজরি তারিখ দেখান')->live(),
+                        Select::make('hijri_offset')->label('হিজরি তারিখ সমন্বয়')->native(false)->selectablePlaceholder(false)
+                            ->options([-2 => '২ দিন আগে', -1 => '১ দিন আগে', 0 => 'যেমন হিসাব হয়', 1 => '১ দিন পরে', 2 => '২ দিন পরে'])
+                            ->helperText('বাংলাদেশে চাঁদ দেখা অনুযায়ী তারিখ আলাদা হলে এখানে মিলিয়ে নিন (সাধারণত ১ দিন আগে)।')
+                            ->visible(fn (Get $get) => $get('show_hijri_date')),
                     ]),
                 ]),
                 Section::make('সোশ্যাল মিডিয়া')->description('খালি রাখলে আইকন দেখাবে না')->schema([

@@ -19,7 +19,7 @@ class HomeSectionResource extends JsonResource
 
         return [
             'id' => (string) $s['id'],
-            /** @var 'hero'|'trust'|'categories'|'products'|'promo_banners'|'help'|'text'|'prayer_times' */
+            /** @var 'hero'|'trust'|'categories'|'products'|'promo_banners'|'help'|'text' */
             'type' => $s['type'],
             /** @var string|null */
             'title' => $s['title'],

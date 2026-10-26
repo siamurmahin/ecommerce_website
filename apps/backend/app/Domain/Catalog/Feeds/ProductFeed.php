@@ -5,6 +5,7 @@ namespace App\Domain\Catalog\Feeds;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Catalog\Models\ProductVariant;
+use App\Domain\Marketing\Support\ActiveFlashSales;
 use App\Settings\BrandSettings;
 use App\Settings\FeedSettings;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,7 +45,7 @@ final class ProductFeed
             }
         });
 
-        return array_values(array_filter($items, fn ($i) => $this->settings->include_out_of_stock || $i['availability'] === 'in_stock'));
+        return array_values(array_filter($items, fn ($i) => $this->settings->include_out_of_stock || $i['availability'] !== 'out_of_stock'));
     }
 
     public function xml(string $channel): string
@@ -63,7 +64,8 @@ final class ProductFeed
         foreach ($this->items() as $item) {
             $w->startElement('item');
             foreach ($item as $key => $value) {
-                if ($key === 'google_product_category' && $channel !== 'google') {
+                // Google's category goes to Google only; the stock count is Meta's (Facebook/Instagram Shops).
+                if (($key === 'google_product_category' && $channel !== 'google') || ($key === 'quantity_to_sell_on_facebook' && $channel !== 'facebook')) {
                     continue;
                 }
                 foreach ((array) $value as $v) {
@@ -130,9 +132,17 @@ final class ProductFeed
             'title' => Str::limit($label ? "{$title} — {$label}" : $title, 150, ''),
             ...$base,
             ...($variant?->image ? ['image_link' => Storage::disk('public')->url($variant->image)] : []),
-            'availability' => $stock > 0 ? 'in_stock' : 'out_of_stock',
+            'availability' => match (true) {
+                $stock > 0 => 'in_stock',
+                (bool) $product->preorder => 'preorder',
+                default => 'out_of_stock',
+            },
+            'quantity_to_sell_on_facebook' => (string) max(0, $stock),
             'price' => self::money($listPrice),
             ...($selling < $listPrice ? ['sale_price' => self::money($selling)] : []),
+            // A flash-sale price says when it ends, so the ad stops showing it on time.
+            ...($selling < $listPrice && ($sale = app(ActiveFlashSales::class)->for($product->id)?->flashSale)
+                ? ['sale_price_effective_date' => $sale->starts_at->toIso8601String().'/'.$sale->ends_at->toIso8601String()] : []),
         ];
     }
 

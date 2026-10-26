@@ -23,6 +23,10 @@ final class Money
 
     public static function format(?int $poisha): string
     {
-        return $poisha === null ? '' : '৳'.number_format($poisha / 100, $poisha % 100 === 0 ? 0 : 2);
+        if ($poisha === null) {
+            return '';
+        }
+
+        return ($poisha < 0 ? '-' : '').'৳'.number_format(abs($poisha) / 100, $poisha % 100 === 0 ? 0 : 2);
     }
 }

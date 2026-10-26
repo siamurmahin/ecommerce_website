@@ -70,6 +70,8 @@ class ManageCourierSettings extends Page
             ->statePath('data')
             ->components([
                 Section::make('সাধারণ')->columns(2)->schema([
+                    Toggle::make('enabled')->label('কুরিয়ার API চালু')->inline(false)->columnSpanFull()
+                        ->helperText('বন্ধ থাকলে অর্ডার পেজে "কুরিয়ারে বুক" দেখাবে না, স্ট্যাটাস পোলিং আর webhook-ও বন্ধ থাকবে।'),
                     Select::make('default_courier')->label('ডিফল্ট কুরিয়ার')->options(app(CourierManager::class)->labels())->native(false)
                         ->helperText('বুকিং ডায়ালগে আগে থেকে বাছা থাকবে'),
                     Toggle::make('auto_update_order')->label('কুরিয়ারের স্ট্যাটাস থেকে অর্ডার স্ট্যাটাস অটো বদলাও')->inline(false)

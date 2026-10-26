@@ -53,6 +53,7 @@ class RoleSeeder extends Seeder
             'order_manager' => [
                 ...$model('Order', ['ViewAny', 'View', 'Create', 'Update']),
                 ...$model('SmsLog', ['ViewAny', 'View', 'Update']),
+                ...$model('WhatsAppMessage', ['ViewAny', 'View', 'Update']),
                 ...$model('DeliveryZone', self::READ),
                 ...$model('Thana', self::READ),
                 ...$model('Product', self::READ),
@@ -60,7 +61,8 @@ class RoleSeeder extends Seeder
                 ...$model('Customer', ['ViewAny', 'View', 'Create', 'Update']),
                 ...$model('Review', self::READ),
                 ...$model('ProductQuestion', ['ViewAny', 'View', 'Update']),
-                ...$pages('ActionNeededWidget', 'OrderStatusChartWidget', 'LowStockWidget'),
+                ...$model('OrderReturn', ['ViewAny', 'View', 'Create', 'Update']),
+                ...$pages('ActionNeededWidget', 'OrderStatusChartWidget', 'LowStockWidget', 'CodReconciliation'),
             ],
             'warehouse' => [
                 ...$model('Order', ['ViewAny', 'View', 'Update']),
@@ -68,6 +70,7 @@ class RoleSeeder extends Seeder
                 ...$model('StockMovement', ['ViewAny', 'View']),
                 ...$model('PurchaseOrder', ['ViewAny', 'View', 'Update']),
                 ...$model('Supplier', self::READ),
+                ...$model('OrderReturn', ['ViewAny', 'View', 'Update']),
                 ...$pages('ActionNeededWidget', 'LowStockWidget'),
             ],
             'catalog_manager' => [
@@ -80,6 +83,7 @@ class RoleSeeder extends Seeder
                 ...$model('StockMovement', ['ViewAny', 'View']),
                 ...$model('PurchaseOrder', self::EDIT),
                 ...$model('Supplier', self::EDIT),
+                ...$model('StockAlert', self::EDIT),
                 ...$model('SearchQuery', ['ViewAny', 'View']),
                 ...$pages('ManageSearchSettings', 'ProductFeeds', 'ActionNeededWidget', 'TopProductsWidget', 'LowStockWidget'),
             ],
@@ -93,7 +97,7 @@ class RoleSeeder extends Seeder
                 ...$model('SearchQuery', ['ViewAny', 'View']),
                 ...$model('Product', self::READ),
                 ...$model('Order', self::READ),
-                ...$pages('ManageHomepage', 'ManageSeasonalSettings', 'ManageTrackingSettings', 'ProductFeeds', 'Rewards', 'Reports'),
+                ...$pages('ManageHomepage', 'ManageTrackingSettings', 'ProductFeeds', 'Rewards', 'Reports'),
                 ...$pages('ActionNeededWidget', 'SalesStatsWidget', 'SalesChartWidget', 'OrderStatusChartWidget', 'TopProductsWidget'),
             ],
             'content_editor' => [
@@ -102,7 +106,7 @@ class RoleSeeder extends Seeder
                 ...$model('Banner', self::EDIT),
                 ...$model('Review', self::EDIT),
                 ...$model('ProductQuestion', self::EDIT),
-                ...$pages('ManageHomepage', 'ManageSeasonalSettings', 'ManageSiteSettings', 'ActionNeededWidget'),
+                ...$pages('ManageHomepage', 'ManageSiteSettings', 'ActionNeededWidget'),
             ],
         ];
     }

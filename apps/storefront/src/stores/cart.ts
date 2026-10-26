@@ -15,7 +15,12 @@ export type CartLine = {
   price: number; // poisha
   quantity: number;
   maxQuantity: number;
+  /** Added from a pre-order product: may go beyond the stock on hand, up to PREORDER_MAX. */
+  preorder?: boolean;
 };
+
+/** Same cap as the API's QuoteLine::MAX_PREORDER. */
+export const PREORDER_MAX = 20;
 
 type CartState = {
   lines: CartLine[];
@@ -62,7 +67,7 @@ export const useCart = create<CartState>()(
           const lines = state.lines.map((line) => {
             const q = quoted.find((ql) => ql.product_id === line.productId && (ql.variant_id ?? null) === line.variantId);
             if (!q || q.problem === "unavailable") return line;
-            const maxQuantity = Math.max(1, q.available);
+            const maxQuantity = line.preorder ? Math.max(PREORDER_MAX, q.available) : Math.max(1, q.available);
             if (q.unit_price === line.price && maxQuantity === line.maxQuantity) return line;
             changed = true;
             return { ...line, price: q.unit_price, maxQuantity, quantity: Math.min(line.quantity, maxQuantity) };

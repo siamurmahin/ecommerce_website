@@ -5,7 +5,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
-export function LocaleSwitch() {
+/** Shown only when both languages are on (সেটিংস → ভাষা). */
+export function LocaleSwitch({ enabled = true }: { enabled?: boolean }) {
   const t = useTranslations("nav");
   const locale = useLocale();
   const router = useRouter();
@@ -16,8 +17,13 @@ export function LocaleSwitch() {
     const { pathname, search } = window.location;
     const prefix = `/${locale}`;
     const path = locale !== routing.defaultLocale && pathname.startsWith(prefix) ? pathname.slice(prefix.length) || "/" : pathname;
-    router.replace(`${path}${search}`, { locale: locale === "bn" ? "en" : "bn" });
+    const next = locale === "bn" ? "en" : "bn";
+    // Remember the choice so the proxy stops sending this visitor to the shop's main language.
+    document.cookie = `lj_lang=${next}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+    router.replace(`${path}${search}`, { locale: next });
   };
+
+  if (!enabled) return null;
 
   return (
     <button

@@ -11,6 +11,9 @@ final class QuoteLine
 
     public const INSUFFICIENT_STOCK = 'insufficient_stock';
 
+    /** Most units of one item a single pre-order may ask for. */
+    public const MAX_PREORDER = 20;
+
     public function __construct(
         public readonly int $productId,
         public readonly ?int $variantId,
@@ -21,6 +24,8 @@ final class QuoteLine
         public readonly int $available,
         public readonly ?string $problem,
         public readonly ?int $bumpId = null,
+        /** Ordered beyond stock on a pre-order product; no stock is taken for it. */
+        public readonly bool $preorder = false,
     ) {}
 
     public function lineTotal(): int

@@ -97,6 +97,15 @@ class ManageSmsSettings extends Page
                             ->required(fn (Get $get) => (bool) $get('recovery_enabled'))
                             ->rule(fn () => fn (string $attribute, $value, \Closure $fail) => blank($value) || str_contains((string) $value, '{link}') ? null : $fail('মেসেজে {link} থাকতে হবে।')),
                     ]),
+                Section::make('স্টকে এলে জানান')
+                    ->description('পণ্য স্টকে না থাকলে কাস্টমার নম্বর রেখে যেতে পারেন; স্টক আবার এলে এই SMS যায়। যা বসাতে পারবেন: {product}  {link}  {shop}')
+                    ->schema([
+                        Grid::make(['default' => 1, 'md' => 4])->schema([
+                            Toggle::make('stock_alert_enabled')->label('চালু')->inline(false),
+                            Textarea::make('stock_alert_template')->hiddenLabel()->rows(2)->maxLength(480)->columnSpan(['md' => 3])
+                                ->required(fn (Get $get) => (bool) $get('stock_alert_enabled')),
+                        ]),
+                    ]),
                 Section::make('লগইন কোড (OTP)')
                     ->description('কাস্টমার অ্যাকাউন্টে ঢোকার কোড। উপরের SMS চালু/বন্ধ সুইচ যা-ই থাকুক, এটা সবসময় যায়। যা বসাতে পারবেন: {code}  {shop}')
                     ->schema([

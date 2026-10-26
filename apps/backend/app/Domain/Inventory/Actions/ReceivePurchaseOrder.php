@@ -32,7 +32,10 @@ final class ReceivePurchaseOrder
                 $row?->increment('stock', $item->quantity);
 
                 if ($item->unit_cost > 0) {
-                    Product::whereKey($item->product_id)->update(['cost_price' => $item->unit_cost]);
+                    // A variant keeps its own purchase price; a plain product's goes on the product.
+                    $item->product_variant_id
+                        ? ProductVariant::whereKey($item->product_variant_id)->update(['cost_price' => $item->unit_cost])
+                        : Product::whereKey($item->product_id)->update(['cost_price' => $item->unit_cost]);
                 }
             }
 

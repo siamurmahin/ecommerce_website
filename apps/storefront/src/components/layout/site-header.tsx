@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { CartButton } from "./cart-button";
 import { BrandMark } from "./brand-mark";
 import { CategoryThumb } from "./category-thumb";
+import { HijriDate } from "./hijri-date";
 import { LocaleSwitch } from "./locale-switch";
 import { MenuLink } from "./menu-link";
 import { MobileMenu } from "./mobile-menu";
@@ -21,9 +22,15 @@ export async function SiteHeader() {
 
   return (
     <header className="site-chrome sticky top-0 z-30 border-b border-border/70 bg-background/85 backdrop-blur-xl">
-      {settings.announcement && (
+      {(settings.announcement || settings.hijri.show) && (
         <div className="bg-primary text-primary-foreground">
           <p className="mx-auto max-w-6xl px-4 py-1.5 text-center text-xs tracking-wide">
+            {settings.hijri.show && (
+              <>
+                <HijriDate offset={settings.hijri.offset} />
+                {settings.announcement && " · "}
+              </>
+            )}
             {settings.announcement}
             <span className="hidden sm:inline">
               {" · "}
@@ -34,7 +41,7 @@ export async function SiteHeader() {
       )}
 
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 md:h-[72px] md:gap-8">
-        <MobileMenu items={menus.header} categories={categories} brand={settings.brand} hotline={settings.hotline} hotlineTel={settings.hotline_tel} className="md:hidden" />
+        <MobileMenu items={menus.header} categories={categories} brand={settings.brand} hotline={settings.hotline} hotlineTel={settings.hotline_tel} languages={settings.languages.mode === "both"} className="md:hidden" />
         <Link href="/" aria-label={settings.brand.name} className="shrink-0">
           <BrandMark brand={settings.brand} className="text-2xl" priority />
         </Link>
@@ -57,7 +64,7 @@ export async function SiteHeader() {
           </Link>
           <CartButton className={iconLink} />
           <span className="hidden md:inline-flex">
-            <LocaleSwitch />
+            <LocaleSwitch enabled={settings.languages.mode === "both"} />
           </span>
         </nav>
       </div>

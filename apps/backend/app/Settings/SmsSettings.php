@@ -51,6 +51,11 @@ class SmsSettings extends Settings
     /** Optional coupon code offered in the reminder; becomes {coupon}. */
     public ?string $recovery_coupon;
 
+    /** Back-in-stock message to customers who asked (see NotifyStockAlerts); {product}, {link}, {shop}. */
+    public bool $stock_alert_enabled;
+
+    public ?string $stock_alert_template;
+
     public const RECOVERY_PLACEHOLDERS = ['{name}', '{link}', '{coupon}', '{shop}', '{hotline}'];
 
     public static function group(): string

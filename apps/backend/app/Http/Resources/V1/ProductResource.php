@@ -27,6 +27,10 @@ class ProductResource extends ProductCardResource
             'stock' => $this->totalStock(),
             'low_stock_threshold' => $this->low_stock_threshold,
             'free_delivery' => $this->free_delivery,
+            /** Orders are taken beyond the stock on hand. */
+            'preorder' => $this->preorder,
+            /** @var string|null */
+            'preorder_note' => $this->preorder ? $this->localized('preorder_note') : null,
             /** @var array<int, array{label: string, value: string}> */
             'specifications' => $this->specifications ?? [],
             'brand' => $this->brand ? ['slug' => $this->brand->slug, 'name' => $this->brand->name] : null,

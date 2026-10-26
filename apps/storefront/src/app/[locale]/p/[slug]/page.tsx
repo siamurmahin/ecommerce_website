@@ -12,7 +12,7 @@ import { ProductReviews } from "@/components/reviews/product-reviews";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Link } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { getProduct, getProducts, getRelated } from "@/lib/api/catalog";
+import { getBoughtTogether, getProduct, getProducts, getRelated } from "@/lib/api/catalog";
 import { getCheckoutOptions } from "@/lib/api/checkout";
 import { getSettings } from "@/lib/api/content";
 import { breadcrumbSchema, productSchema } from "@/lib/schema";
@@ -128,15 +128,29 @@ async function ProductContent({ params }: PageProps<"/[locale]/p/[slug]">) {
 
       <ProductQuestions slug={product.slug} />
 
+      <Suspense fallback={null}>
+        <Related slug={slug} locale={locale} title={t("product.boughtTogether")} load={getBoughtTogether} />
+      </Suspense>
+
       <Suspense fallback={<ProductGridSkeleton count={4} />}>
-        <Related slug={slug} locale={locale} title={t("product.related")} />
+        <Related slug={slug} locale={locale} title={t("product.related")} load={getRelated} />
       </Suspense>
     </>
   );
 }
 
-async function Related({ slug, locale, title }: { slug: string; locale: string; title: string }) {
-  const products = await getRelated(slug, locale);
+async function Related({
+  slug,
+  locale,
+  title,
+  load,
+}: {
+  slug: string;
+  locale: string;
+  title: string;
+  load: typeof getRelated;
+}) {
+  const products = await load(slug, locale);
   if (products.length === 0) return null;
 
   return (

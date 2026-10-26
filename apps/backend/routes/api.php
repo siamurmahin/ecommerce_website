@@ -13,10 +13,12 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PageController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\ProductQuestionController;
+use App\Http\Controllers\Api\V1\ReturnController;
 use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\SettingsController;
 use App\Http\Controllers\Api\V1\SitemapController;
+use App\Http\Controllers\Api\V1\StockAlertController;
 use App\Http\Controllers\Api\V1\TrackingController;
 use App\Http\Middleware\AuthenticateCustomer;
 use App\Http\Middleware\SetApiLocale;
@@ -29,6 +31,7 @@ Route::prefix('v1')->middleware(SetApiLocale::class)->group(function () {
     ]);
 
     Route::get('/home', HomeController::class);
+    Route::get('/settings/languages', [SettingsController::class, 'languages']);
     Route::get('/settings', SettingsController::class);
     Route::get('/menus', MenuController::class);
     Route::get('/sitemap', SitemapController::class);
@@ -49,15 +52,18 @@ Route::prefix('v1')->middleware(SetApiLocale::class)->group(function () {
     Route::get('/products/cross-sells', [ProductController::class, 'crossSells']);
     Route::get('/products/{slug}', [ProductController::class, 'show']);
     Route::get('/products/{slug}/related', [ProductController::class, 'related']);
+    Route::get('/products/{slug}/bought-together', [ProductController::class, 'boughtTogether']);
     Route::get('/products/{slug}/reviews', [ReviewController::class, 'index']);
     Route::get('/products/{slug}/questions', [ProductQuestionController::class, 'index']);
     Route::post('/products/{slug}/questions', [ProductQuestionController::class, 'store'])->middleware('throttle:5,1,questions');
+    Route::post('/products/{slug}/stock-alerts', [StockAlertController::class, 'store'])->middleware('throttle:5,1,stock-alerts');
 
     Route::get('/checkout/options', [CheckoutController::class, 'options']);
     Route::post('/cart/quote', [CheckoutController::class, 'quote'])->middleware('throttle:60,1,quote');
     Route::post('/orders', [OrderController::class, 'store'])->middleware('throttle:10,1,orders');
     Route::post('/orders/track', [OrderController::class, 'track'])->middleware('throttle:10,1,track');
     Route::get('/orders/{number}', [OrderController::class, 'show']);
+    Route::post('/orders/{number}/returns', [ReturnController::class, 'store'])->middleware('throttle:5,1,returns');
     Route::post('/checkout/draft', [CheckoutController::class, 'draft'])->middleware('throttle:30,1,draft');
     Route::get('/checkout/recover/{token}', [CheckoutController::class, 'recover'])->middleware('throttle:30,1,recover');
 

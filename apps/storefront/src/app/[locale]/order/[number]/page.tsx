@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { getTranslations } from "next-intl/server";
 import { OrderSuccessMark } from "@/components/checkout/order-success-mark";
 import { OrderTimeline } from "@/components/order/order-timeline";
+import { ReturnRequest } from "@/components/order/return-request";
 import { TrackPurchase } from "@/components/tracking/track-purchase";
 import { buttonVariants } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -119,6 +120,12 @@ async function OrderContent({ params, searchParams }: PageProps<"/[locale]/order
             <dt className="text-muted-foreground">{tc("delivery")}</dt>
             <dd className="tabular-nums">{order.delivery_charge === 0 ? tc("free") : formatTaka(order.delivery_charge, locale)}</dd>
           </div>
+          {order.gift_wrap && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">{tc("giftWrap")}</dt>
+              <dd className="tabular-nums">{order.gift_wrap_charge === 0 ? tc("free") : formatTaka(order.gift_wrap_charge, locale)}</dd>
+            </div>
+          )}
           <div className="flex items-baseline justify-between border-t border-border pt-3">
             <dt className="font-semibold">{tc("total")}</dt>
             <dd className="text-xl font-semibold text-primary tabular-nums">{formatTaka(order.total, locale)}</dd>
@@ -156,6 +163,8 @@ async function OrderContent({ params, searchParams }: PageProps<"/[locale]/order
                 : t("paidInFull")}</p>
         </div>
       </section>
+
+      <ReturnRequest order={order} token={token} />
 
       <Link href="/shop" className={cn(buttonVariants({ size: "lg" }), "h-12 self-center rounded-full px-8 text-[15px]")}>
         {t("continue")}

@@ -31,7 +31,7 @@ final class BookCourierAction
             ->icon(Heroicon::OutlinedTruck)
             ->color('primary')
             ->authorize(fn (Order $record) => auth()->user()->can('update', $record))
-            ->visible(fn (Order $record) => ! $record->shipments()->active()->exists())
+            ->visible(fn (Order $record) => app(CourierSettings::class)->enabled && ! $record->shipments()->active()->exists())
             ->modalDescription(fn () => self::couriers() ? null : 'কোনো কুরিয়ারের API key সেট করা নেই। সেটিংস → কুরিয়ার থেকে যোগ করুন।')
             ->fillForm(fn (Order $record) => [
                 'courier' => self::defaultCourier(),

@@ -23,7 +23,8 @@
     "closeMenu": "Close menu",
     "mainMenu": "Main menu",
     "allCategories": "All categories",
-    "viewAllIn": "View all {name}"
+    "viewAllIn": "View all {name}",
+    "hijriSuffix": "AH"
   },
   "home": {
     "shopByCategory": "Shop by category",
@@ -44,6 +45,7 @@
     "description": "Description",
     "specifications": "Specifications",
     "related": "You may also like",
+    "boughtTogether": "Customers who bought this also bought",
     "whatsapp": "Ask on WhatsApp",
     "callToOrder": "Call to order",
     "delivery": "Delivery",
@@ -56,7 +58,10 @@
     "freeDelivery": "Free delivery on this item",
     "deliveryZones": "Delivery charges",
     "deliveryWithin": "Delivered in {from}–{to} days",
-    "upsells": "Better alternatives"
+    "upsells": "Better alternatives",
+    "preorderOpen": "Pre-order open",
+    "preorderNow": "Pre-order now",
+    "preorderBeyond": "{count} in stock; the rest ship as a pre-order"
   },
   "listing": {
     "products": "{count} products",
@@ -151,7 +156,8 @@
     },
     "referralDiscount": "Referral code {code}",
     "pointsDiscount": "{points} points",
-    "packageDiscount": "Package: {name}"
+    "packageDiscount": "Package: {name}",
+    "giftWrap": "Gift wrap"
   },
   "checkout": {
     "title": "Checkout",
@@ -225,7 +231,12 @@
     "copied": "Copied",
     "usePoints": "Use {points} points (−{amount})",
     "pointsBalance": "You have {points} points",
-    "pointsOwnNumber": "Points can only be used on orders to your account's number"
+    "pointsOwnNumber": "Points can only be used on orders to your account's number",
+    "preorderLine": "Pre-order — ships with the next stock",
+    "giftWrap": "Gift wrap it",
+    "giftWrapFree": "Free",
+    "giftNote": "Add a message on a gift card",
+    "giftNotePlaceholder": "e.g. Eid Mubarak, take care — Rafi"
   },
   "order": {
     "metaTitle": "Order {number}",
@@ -470,36 +481,6 @@
     "expiredNote": "That cart is no longer available. Please pick the products again.",
     "shop": "Start shopping"
   },
-  "prayer": {
-    "title": "Today's prayer times",
-    "note": "Calculated locally; may differ by a minute or two.",
-    "city": "City",
-    "fajr": "Fajr",
-    "sunrise": "Sunrise",
-    "dhuhr": "Dhuhr",
-    "asr": "Asr",
-    "maghrib": "Maghrib",
-    "isha": "Isha",
-    "sehri": "Sehri ends",
-    "iftar": "Iftar",
-    "sehriEnds": "Sehri ends in",
-    "iftarIn": "Iftar in",
-    "cities": {
-      "dhaka": "Dhaka",
-      "chattogram": "Chattogram",
-      "sylhet": "Sylhet",
-      "rajshahi": "Rajshahi",
-      "khulna": "Khulna",
-      "barishal": "Barishal",
-      "rangpur": "Rangpur",
-      "mymensingh": "Mymensingh",
-      "cumilla": "Cumilla",
-      "narayanganj": "Narayanganj",
-      "gazipur": "Gazipur",
-      "bogura": "Bogura",
-      "coxs_bazar": "Cox's Bazar"
-    }
-  },
   "search": {
     "suggestions": "Search suggestions",
     "popular": "Popular searches",
@@ -508,5 +489,51 @@
     "empty": "Nothing found — try another spelling",
     "showingFor": "Showing results for “{term}”",
     "clear": "Clear"
+  },
+  "stockAlert": {
+    "title": "Get an SMS when it's back",
+    "phone": "Mobile number",
+    "submit": "Notify me",
+    "done": "Thanks! We'll text you as soon as it's back.",
+    "invalidPhone": "Enter a valid mobile number (e.g. 01712345678).",
+    "tooMany": "Too many tries — please wait a moment.",
+    "failed": "Couldn't send that, please try again."
+  },
+  "returns": {
+    "title": "Return or exchange",
+    "open": "Request a return / exchange",
+    "type": "What would you like?",
+    "types": {
+      "return": "Return (refund)",
+      "exchange": "Exchange"
+    },
+    "items": "Which items, how many",
+    "reason": "Reason",
+    "reasons": {
+      "damaged": "Arrived damaged",
+      "wrong_item": "Wrong item",
+      "size": "Size doesn't fit",
+      "not_as_described": "Not as pictured/described",
+      "quality": "Poor quality",
+      "changed_mind": "Changed my mind",
+      "other": "Other"
+    },
+    "note": "Details (optional)",
+    "notePlaceholder": "Tell us what went wrong — for an exchange, which size/colour you'd like",
+    "submit": "Send request",
+    "cancel": "Cancel",
+    "pickItem": "Choose at least one item.",
+    "pickReason": "Choose a reason.",
+    "failed": "Couldn't send the request. Please try again.",
+    "tooMany": "Too many attempts, please try again shortly.",
+    "done": "Request received. We'll call you soon to arrange the pickup.",
+    "history": "Your requests",
+    "statuses": {
+      "requested": "Request sent",
+      "approved": "Approved — waiting for the item",
+      "received": "Item received",
+      "completed": "Completed",
+      "rejected": "Not accepted"
+    }
   }
 }

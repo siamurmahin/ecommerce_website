@@ -114,6 +114,7 @@ final class CartPricer
             : $variantId === null);
 
         $available = ! $sellable ? 0 : ($variant ? $variant->stock : $product->stock);
+        $preorder = $sellable && $product->preorder && $available < $quantity && $quantity <= QuoteLine::MAX_PREORDER;
 
         return new QuoteLine(
             productId: (int) $item['product_id'],
@@ -124,10 +125,12 @@ final class CartPricer
             unitPrice: $sellable ? $product->unitPrice($variant) : 0,
             available: max(0, $available),
             problem: match (true) {
+                $preorder => null,
                 ! $sellable || $available <= 0 => QuoteLine::UNAVAILABLE,
                 $available < $quantity => QuoteLine::INSUFFICIENT_STOCK,
                 default => null,
             },
+            preorder: $preorder,
         );
     }
 

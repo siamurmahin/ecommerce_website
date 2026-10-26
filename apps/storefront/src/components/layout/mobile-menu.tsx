@@ -12,10 +12,10 @@ import { CategoryThumb } from "./category-thumb";
 import { LocaleSwitch } from "./locale-switch";
 import { MenuLink } from "./menu-link";
 
-type Props = { items: MenuItem[]; categories: Category[]; brand: SiteSettings["brand"]; hotline: string; hotlineTel: string; className?: string };
+type Props = { items: MenuItem[]; categories: Category[]; brand: SiteSettings["brand"]; hotline: string; hotlineTel: string; languages: boolean; className?: string };
 
 /** Hamburger + left off-canvas panel: admin menu, categories, quick links. */
-export function MobileMenu({ items, categories, brand, hotline, hotlineTel, className }: Props) {
+export function MobileMenu({ items, categories, brand, hotline, hotlineTel, languages, className }: Props) {
   const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<number | null>(null);
@@ -127,7 +127,7 @@ export function MobileMenu({ items, categories, brand, hotline, hotlineTel, clas
               </a>
             )}
             <div className="flex justify-center">
-              <LocaleSwitch />
+              <LocaleSwitch enabled={languages} />
             </div>
           </div>
         </Dialog.Popup>
