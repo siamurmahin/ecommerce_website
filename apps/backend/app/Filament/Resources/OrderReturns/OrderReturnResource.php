@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources\OrderReturns;
 
+use App\Domain\Courier\CourierException;
 use App\Domain\Order\Models\Order;
 use App\Domain\Returns\Actions\ReceiveReturn;
+use App\Domain\Returns\Actions\RequestCourierReturn;
 use App\Domain\Returns\Enums\ReturnReason;
 use App\Domain\Returns\Enums\ReturnStatus;
 use App\Domain\Returns\Enums\ReturnType;
@@ -93,7 +95,8 @@ class OrderReturnResource extends Resource
                 TextColumn::make('type')->label('ধরন')->badge(),
                 TextColumn::make('reason')->label('কারণ')->description(fn (OrderReturn $record) => $record->note)->wrap(),
                 TextColumn::make('items')->label('পণ্য')->state(fn (OrderReturn $record) => $record->summary())->wrap(),
-                TextColumn::make('status')->label('অবস্থা')->badge(),
+                TextColumn::make('status')->label('অবস্থা')->badge()
+                    ->description(fn (OrderReturn $record) => $record->courier_return_id ? "কুরিয়ার পিকআপ: {$record->courier_return_status}" : null),
                 TextColumn::make('refund_amount')->label('ফেরত')->formatStateUsing(fn ($state) => $state ? Money::format((int) $state) : '—')->alignEnd()
                     ->description(fn (OrderReturn $record) => OrderReturn::REFUND_METHODS[$record->refund_method] ?? $record->exchangeOrder?->number),
                 TextColumn::make('source')->label('কে চেয়েছে')->formatStateUsing(fn (string $state) => $state === 'customer' ? 'কাস্টমার (ওয়েবসাইট)' : 'স্টাফ')
@@ -135,6 +138,34 @@ class OrderReturnResource extends Resource
                         'exchange_order_id' => $data['exchange_order_id'] ?? null, 'resolved_at' => now(), 'user_id' => auth()->id(),
                     ])),
                 ActionGroup::make([
+                    Action::make('courierReturn')->label('কুরিয়ারকে ফেরত আনতে বলুন')->icon(Heroicon::OutlinedTruck)
+                        ->visible(fn (OrderReturn $record) => in_array($record->status, [ReturnStatus::Requested, ReturnStatus::Approved], true)
+                            && ! $record->courier_return_id && RequestCourierReturn::shipmentFor($record))
+                        ->authorize('update')
+                        ->modalDescription(fn (OrderReturn $record) => 'যে কুরিয়ার ডেলিভারি দিয়েছিল ('.RequestCourierReturn::shipmentFor($record)?->courierLabel().') তাকে API দিয়ে রিটার্ন পিকআপের অনুরোধ পাঠানো হবে।')
+                        ->fillForm(fn (OrderReturn $record) => ['reason' => collect([$record->reason->getLabel(), $record->note])->filter()->implode('. ')])
+                        ->schema([Textarea::make('reason')->label('কুরিয়ারের জন্য কারণ')->rows(2)->required()->maxLength(250)])
+                        ->action(function (OrderReturn $record, array $data, Action $action) {
+                            try {
+                                app(RequestCourierReturn::class)->handle($record, $data['reason']);
+                            } catch (CourierException $e) {
+                                Notification::make()->danger()->title('অনুরোধ পাঠানো যায়নি')->body($e->getMessage())->persistent()->send();
+                                $action->halt();
+
+                                return;
+                            }
+                            Notification::make()->success()->title('কুরিয়ারে রিটার্ন অনুরোধ পাঠানো হয়েছে')->send();
+                        }),
+                    Action::make('courierReturnStatus')->label('কুরিয়ারের পিকআপ অবস্থা দেখুন')->icon(Heroicon::OutlinedArrowPath)
+                        ->visible(fn (OrderReturn $record) => (bool) $record->courier_return_id)->authorize('update')
+                        ->action(function (OrderReturn $record) {
+                            try {
+                                app(RequestCourierReturn::class)->refresh($record);
+                                Notification::make()->success()->title("কুরিয়ার পিকআপ: {$record->courier_return_status}")->send();
+                            } catch (CourierException $e) {
+                                Notification::make()->danger()->title('অবস্থা আনা যায়নি')->body($e->getMessage())->send();
+                            }
+                        }),
                     Action::make('reject')->label('বাতিল করুন')->icon(Heroicon::OutlinedXMark)->color('danger')
                         ->visible(fn (OrderReturn $record) => in_array($record->status, [ReturnStatus::Requested, ReturnStatus::Approved], true))->authorize('update')
                         ->schema([Textarea::make('staff_note')->label('কারণ')->rows(2)->required()->maxLength(1000)])

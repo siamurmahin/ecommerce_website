@@ -83,21 +83,12 @@ final class BookCourierAction
             ->modalDescription('COD হবে অর্ডারের মোট টাকা (অগ্রিম পেমেন্ট থাকলে ০), নোট হবে কাস্টমারের নোট। আগেই বুক করা অর্ডার বাদ যাবে।')
             ->deselectRecordsAfterCompletion()
             ->action(function (Collection $records, array $data, BookShipment $book) {
-                $booked = 0;
-                $errors = [];
-
-                foreach ($records as $order) {
-                    try {
-                        $book->handle($order, $data['courier'], new Parcel(
-                            codAmount: self::codFor($order),
-                            weightKg: (float) $data['weight'],
-                            note: $order->customer_note,
-                        ), auth()->id());
-                        $booked++;
-                    } catch (CourierException $e) {
-                        $errors[] = $e->getMessage();
-                    }
-                }
+                ['booked' => $shipments, 'errors' => $errors] = $book->handleMany($records, $data['courier'], fn (Order $order) => new Parcel(
+                    codAmount: self::codFor($order),
+                    weightKg: (float) $data['weight'],
+                    note: $order->customer_note,
+                ), auth()->id());
+                $booked = count($shipments);
 
                 Notification::make()
                     ->{$errors ? 'warning' : 'success'}()

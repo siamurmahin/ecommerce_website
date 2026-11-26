@@ -2,18 +2,25 @@
 
 namespace App\Filament\Pages;
 
+use App\Domain\Courier\Actions\ImportPayout;
 use App\Domain\Courier\Actions\SettleCod;
+use App\Domain\Courier\Contracts\PaysOut;
+use App\Domain\Courier\CourierException;
+use App\Domain\Courier\CourierManager;
+use App\Domain\Courier\Data\Payout;
 use App\Domain\Courier\Models\Shipment;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Filament\Resources\Orders\OrderResource;
 use App\Filament\Support\Fields;
+use App\Settings\CourierSettings;
 use App\Support\Money;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -137,6 +144,32 @@ class CodReconciliation extends Page implements HasTable
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('importPayout')->label('কুরিয়ারের পেমেন্ট থেকে মেলান')->icon(Heroicon::OutlinedArrowPath)->color('success')
+                ->authorize(fn () => auth()->user()?->can('update', Order::class))
+                ->visible(fn () => self::payingCouriers() !== [])
+                ->modalDescription('কুরিয়ার যে পেমেন্ট পাঠিয়েছে সেটা বেছে নিন — তার ভেতরের ডেলিভারড পার্সেলগুলোর অর্ডার নিজে থেকে মিলে যাবে। বাতিল/রিটার্ন পার্সেল বাদ যাবে; একই পেমেন্ট দুবার মেলালে কিছু বদলাবে না।')
+                ->schema([
+                    Select::make('payout')->label('পেমেন্ট')->options(fn () => self::payoutOptions())->required()->native(false)->searchable(),
+                ])
+                ->action(function (array $data, Action $action) {
+                    [$courier, $id] = explode('|', $data['payout'], 2);
+                    try {
+                        $result = app(ImportPayout::class)->handle($courier, $id, auth()->id());
+                    } catch (CourierException $e) {
+                        Notification::make()->danger()->title('পেমেন্ট আনা যায়নি')->body($e->getMessage())->persistent()->send();
+                        $action->halt();
+
+                        return;
+                    }
+                    Notification::make()->title("{$result['settled']} টি অর্ডার মেলানো হয়েছে")
+                        ->body(collect([
+                            $result['already'] ? "{$result['already']} টি আগেই মেলানো ছিল।" : null,
+                            $result['skipped'] ? "{$result['skipped']} টি পার্সেলে টাকা আসেনি (বাতিল/রিটার্ন)।" : null,
+                            $result['short'] ? "{$result['short']} টিতে টাকা কম এসেছে (পার্থক্য কলাম দেখুন)।" : null,
+                            $result['unmatched'] ? 'আমাদের অর্ডারে মেলেনি: '.implode(', ', array_slice($result['unmatched'], 0, 10)) : null,
+                        ])->filter()->implode(' '))
+                        ->{$result['unmatched'] || $result['short'] ? 'warning' : 'success'}()->persistent()->send();
+                }),
             Action::make('import')->label('কুরিয়ারের CSV থেকে মেলান')->icon(Heroicon::OutlinedArrowUpTray)
                 ->authorize(fn () => auth()->user()?->can('update', Order::class))
                 ->modalDescription('কুরিয়ারের পেমেন্ট রিপোর্ট CSV দিন। প্রথম সারিতে কলামের নাম থাকতে হবে: অর্ডার নম্বর/invoice বা consignment_id, আর টাকা (collected/cod/amount); কুরিয়ার চার্জ (fee/charge) থাকলে সেটাও নেওয়া হবে।')
@@ -155,6 +188,45 @@ class CodReconciliation extends Page implements HasTable
                         ->{$result['unmatched'] || $result['short'] ? 'warning' : 'success'}()->persistent()->send();
                 }),
         ];
+    }
+
+    /** @return array<string, PaysOut> courier key => driver, for configured couriers whose payouts the API lists */
+    private static function payingCouriers(): array
+    {
+        if (! app(CourierSettings::class)->enabled) {
+            return [];
+        }
+        $couriers = app(CourierManager::class);
+
+        return collect($couriers->configured())->keys()
+            ->mapWithKeys(fn (string $key) => [$key => $couriers->driver($key)])
+            ->filter(fn ($driver) => $driver instanceof PaysOut)->all();
+    }
+
+    /** @return array<string, string> "courier|payout id" => label */
+    private static function payoutOptions(): array
+    {
+        $options = [];
+        foreach (self::payingCouriers() as $key => $driver) {
+            try {
+                $payouts = collect($driver->payouts())->take(50);
+            } catch (CourierException $e) {
+                Notification::make()->danger()->title('পেমেন্টের তালিকা আনা যায়নি')->body($e->getMessage())->send();
+
+                continue;
+            }
+            $done = Order::whereIn('cod_settlement_ref', $payouts->pluck('id'))->distinct()->pluck('cod_settlement_ref')->flip();
+            foreach ($payouts as $payout) {
+                /** @var Payout $payout */
+                $options["{$key}|{$payout->id}"] = implode(' · ', array_filter([
+                    $driver::label(), $payout->id, Money::format($payout->total), $payout->status,
+                    $payout->createdAt?->setTimezone(config('shop.timezone'))->format('d M Y'),
+                    isset($done[$payout->id]) ? 'আগে মেলানো' : null,
+                ]));
+            }
+        }
+
+        return $options;
     }
 
     /**

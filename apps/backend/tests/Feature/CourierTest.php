@@ -6,6 +6,7 @@ use App\Domain\Catalog\Enums\ProductType;
 use App\Domain\Catalog\Models\Category;
 use App\Domain\Catalog\Models\Product;
 use App\Domain\Courier\Actions\BookShipment;
+use App\Domain\Courier\Actions\ImportPayout;
 use App\Domain\Courier\CourierException;
 use App\Domain\Courier\Data\Parcel;
 use App\Domain\Courier\Enums\ShipmentStatus;
@@ -13,9 +14,17 @@ use App\Domain\Courier\Models\Shipment;
 use App\Domain\Order\Actions\PlaceOrder;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
+use App\Domain\Returns\Actions\RequestCourierReturn;
+use App\Domain\Returns\Enums\ReturnReason;
+use App\Domain\Returns\Enums\ReturnStatus;
+use App\Domain\Returns\Enums\ReturnType;
+use App\Domain\Returns\Models\OrderReturn;
 use App\Domain\Shipping\Models\District;
 use App\Filament\Actions\BookCourierAction;
+use App\Filament\Pages\CodReconciliation;
 use App\Filament\Pages\ManageCourierSettings;
+use App\Filament\Resources\OrderReturns\Pages\ListOrderReturns;
+use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Models\User;
 use App\Settings\CourierSettings;
@@ -233,5 +242,131 @@ class CourierTest extends TestCase
         $this->assertFalse(BookCourierAction::make()->record($this->order)->isVisible());
         $this->artisan('courier:sync')->expectsOutputToContain('Courier API is off')->assertSuccessful();
         $this->postJson('/api/v1/webhooks/courier/steadfast', [])->assertNotFound();
+    }
+
+    private function anotherOrder(): Order
+    {
+        $dhaka = District::where('name_en', 'Dhaka')->firstOrFail();
+
+        return app(PlaceOrder::class)->handle([
+            'name' => 'করিম', 'phone' => '01812345678', 'address' => 'বাড়ি ৫',
+            'district_id' => $dhaka->id, 'thana_id' => $dhaka->thanas()->where('name_en', 'Mirpur')->value('id'),
+            'payment_method' => 'cod', 'items' => [['product_id' => $this->product->id, 'quantity' => 1]],
+        ]);
+    }
+
+    public function test_steadfast_bulk_books_in_one_request_and_reports_refused_orders(): void
+    {
+        $second = $this->anotherOrder();
+        Http::fake(['portal.packzy.com/api/v1/create_order/bulk-order' => Http::response(['status' => 200, 'data' => [
+            ['invoice' => $this->order->number, 'consignment_id' => 501, 'tracking_code' => 'B501', 'status' => 'success'],
+            ['invoice' => $second->number, 'consignment_id' => null, 'tracking_code' => null, 'status' => null, 'error' => '["THIS_INVOICE_ALREADY_EXISTS"]'],
+        ]])]);
+
+        $result = app(BookShipment::class)->handleMany([$this->order, $second], 'steadfast', fn (Order $o) => new Parcel($o->dueOnDelivery()));
+
+        Http::assertSentCount(1);
+        Http::assertSent(fn (Request $r) => array_is_list($r->data()) && count($r->data()) === 2 && $r->data()[0]['invoice'] === $this->order->number);
+        $this->assertCount(1, $result['booked']);
+        $this->assertSame('501', $result['booked'][0]->consignment_id);
+        $this->assertStringContainsString('this invoice already exists', $result['errors'][0]);
+        $this->assertSame(OrderStatus::Shipped, $this->order->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $second->fresh()->status);
+    }
+
+    public function test_bulk_booking_from_the_orders_table(): void
+    {
+        $this->seed(RoleSeeder::class);
+        $this->actingAs(tap(User::factory()->create())->assignRole('super_admin'));
+        $second = $this->anotherOrder();
+        Http::fake(['portal.packzy.com/api/v1/create_order/bulk-order' => Http::response(['status' => 200, 'data' => [
+            ['invoice' => $this->order->number, 'consignment_id' => 601, 'tracking_code' => 'C1', 'status' => 'success'],
+            ['invoice' => $second->number, 'consignment_id' => 602, 'tracking_code' => 'C2', 'status' => 'success'],
+        ]])]);
+
+        Livewire::test(ListOrders::class)
+            ->callTableBulkAction('bookCourier', [$this->order, $second], ['courier' => 'steadfast', 'weight' => 0.5])
+            ->assertHasNoTableBulkActionErrors();
+
+        $this->assertSame(2, Shipment::count());
+        Http::assertSentCount(1);
+    }
+
+    public function test_steadfast_payout_settles_delivered_orders_once(): void
+    {
+        Http::fake([
+            '*/create_order' => Http::response(['status' => 200, 'consignment' => ['consignment_id' => 801, 'tracking_code' => 'P1', 'status' => 'in_review']]),
+            '*/payments/SFC-1' => Http::response(['status' => 1, 'payment' => [
+                'payment_id' => 'SFC-1', 'amount' => 960, 'charges' => 60, 'total' => 900, 'method' => 'bKash', 'status_label' => 'paid',
+                'created_at' => '2026-11-20 16:08:24', 'paid_at' => '2026-11-20 18:00:00',
+                'consignments' => [
+                    ['consignment_id' => 801, 'invoice' => $this->order->number, 'cod_amount' => 900, 'status' => 'delivered'],
+                    ['consignment_id' => 999, 'invoice' => 'SOMEONE-ELSE', 'cod_amount' => 100, 'status' => 'delivered'],
+                    ['consignment_id' => 998, 'invoice' => null, 'cod_amount' => 300, 'status' => 'cancelled'],
+                ],
+            ]]),
+        ]);
+        $this->book('steadfast');
+
+        $result = app(ImportPayout::class)->handle('steadfast', 'SFC-1');
+
+        // The webhook was missed, so the payout also marks the order delivered; ৳900 of ৳960 arrived.
+        $order = $this->order->fresh();
+        $this->assertSame(OrderStatus::Delivered, $order->status);
+        $this->assertSame(90000, $order->cod_collected);
+        $this->assertSame('SFC-1', $order->cod_settlement_ref);
+        $this->assertSame(['settled' => 1, 'short' => 1, 'already' => 0, 'skipped' => 1, 'unmatched' => ['SOMEONE-ELSE']], $result);
+
+        $again = app(ImportPayout::class)->handle('steadfast', 'SFC-1');
+        $this->assertSame(1, $again['already']);
+        $this->assertSame(90000, $order->fresh()->paid_amount);
+    }
+
+    public function test_payout_list_feeds_the_cod_page(): void
+    {
+        $this->seed(RoleSeeder::class);
+        $this->actingAs(tap(User::factory()->create())->assignRole('super_admin'));
+        Http::fake([
+            '*/payments' => Http::response(['status' => 1, 'payments' => [
+                ['payment_id' => 'SFC-7', 'amount' => 0, 'charges' => 0, 'total' => 0, 'method' => 'Cash', 'status_label' => 'ready', 'created_at' => '2026-11-21 10:00:00', 'paid_at' => null],
+            ]]),
+            '*/payments/SFC-7' => Http::response(['status' => 1, 'payment' => ['payment_id' => 'SFC-7', 'total' => 0, 'status_label' => 'ready', 'consignments' => []]]),
+        ]);
+
+        Livewire::test(CodReconciliation::class)
+            ->assertActionVisible('importPayout')
+            ->callAction('importPayout', ['payout' => 'steadfast|SFC-7'])
+            ->assertHasNoActionErrors();
+
+        Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/payments/SFC-7'));
+    }
+
+    public function test_return_pickup_is_requested_from_the_courier_and_followed(): void
+    {
+        $this->seed(RoleSeeder::class);
+        $this->actingAs(tap(User::factory()->create())->assignRole('super_admin'));
+        Http::fake([
+            '*/create_order' => Http::response(['status' => 200, 'consignment' => ['consignment_id' => 901, 'tracking_code' => 'R1', 'status' => 'in_review']]),
+            '*/create_return_request' => Http::response(['id' => 12, 'consignment_id' => 901, 'reason' => 'x', 'status' => 'pending']),
+            '*/get_return_request/12' => Http::response(['data' => ['id' => 12, 'consignment_id' => 901, 'status' => 'approved']]),
+        ]);
+        $this->book('steadfast');
+        $return = OrderReturn::create([
+            'order_id' => $this->order->id, 'type' => ReturnType::Return, 'reason' => ReturnReason::Damaged, 'status' => ReturnStatus::Approved,
+            'items' => [['order_item_id' => $this->order->items->first()->id, 'quantity' => 1]], 'source' => 'staff',
+        ]);
+
+        Livewire::test(ListOrderReturns::class)
+            ->callTableAction('courierReturn', $return, ['reason' => 'ভাঙা এসেছে'])
+            ->assertHasNoTableActionErrors();
+
+        Http::assertSent(fn (Request $r) => str_ends_with($r->url(), '/create_return_request') && $r['consignment_id'] === '901' && $r['reason'] === 'ভাঙা এসেছে');
+        $this->assertSame('12', $return->fresh()->courier_return_id);
+
+        Artisan::call('courier:sync');
+        $this->assertSame('approved', $return->fresh()->courier_return_status);
+
+        $this->expectException(CourierException::class);
+        app(RequestCourierReturn::class)->handle($return->fresh());
     }
 }

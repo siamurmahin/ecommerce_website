@@ -17,7 +17,7 @@ use Illuminate\Support\Collection;
 /** A return or exchange of some (or all) items of a delivered order. Refund in poisha. */
 #[Fillable([
     'order_id', 'type', 'reason', 'status', 'items', 'note', 'staff_note', 'refund_amount', 'refund_method', 'restocked_cost',
-    'exchange_order_id', 'source', 'user_id', 'received_at', 'resolved_at',
+    'exchange_order_id', 'courier_return_id', 'courier_return_status', 'source', 'user_id', 'received_at', 'resolved_at',
 ])]
 class OrderReturn extends Model
 {
