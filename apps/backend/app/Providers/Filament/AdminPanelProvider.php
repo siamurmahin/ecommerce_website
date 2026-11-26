@@ -37,6 +37,9 @@ class AdminPanelProvider extends PanelProvider
             ->brandName(fn () => self::brand()?->name ?? 'Looks Jhorna')
             ->brandLogo(fn () => self::brand()?->url(self::brand()->logo))
             ->brandLogoHeight('2.25rem')
+            // The bell: new website orders (NotifyStaffOfNewOrder).
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->favicon(fn () => self::brand()?->url(self::brand()->favicon))
             ->font('Manrope')
             ->colors([

@@ -15,6 +15,7 @@ use App\Domain\Marketing\Support\ActiveFlashSales;
 use App\Domain\Order\Events\OrderPlaced;
 use App\Domain\Order\Events\OrderStatusChanged;
 use App\Domain\Order\Listeners\CloseIncompleteOrders;
+use App\Domain\Order\Listeners\NotifyStaffOfNewOrder;
 use App\Domain\Reward\Listeners\SyncOrderPoints;
 use App\Domain\Sms\Listeners\SendOrderSms;
 use App\Domain\WhatsApp\Listeners\SendOrderWhatsApp;
@@ -80,6 +81,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(OrderPlaced::class, CloseIncompleteOrders::class);
         Event::listen(OrderPlaced::class, CheckNewOrder::class);
         Event::listen(OrderPlaced::class, RecordCustomer::class);
+        Event::listen(OrderPlaced::class, NotifyStaffOfNewOrder::class);
         Event::listen(OrderStatusChanged::class, [SendOrderSms::class, 'statusChanged']);
         Event::listen(OrderPlaced::class, [SendOrderWhatsApp::class, 'placed']);
         Event::listen(OrderStatusChanged::class, [SendOrderWhatsApp::class, 'statusChanged']);

@@ -55,8 +55,17 @@ STOREFRONT_URL=https://example.com
 STOREFRONT_REVALIDATE_SECRET=<openssl rand -hex 32>   # same value as the storefront's REVALIDATE_SECRET
 SHOP_TIMEZONE=Asia/Dhaka
 
+# Email: new-order alerts to the shop and review requests. Any SMTP works (Gmail app password, Zoho, Brevo, Mailgun…).
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=...
+MAIL_PASSWORD=...
+MAIL_FROM_ADDRESS="orders@example.com"
+MAIL_FROM_NAME="Looks Jhorna"
+
 ADMIN_NAME="..."
-ADMIN_EMAIL=...
+ADMIN_EMAIL=...   # also the first address for new-order emails (সেটিংস → নতুন অর্ডারের নোটিফিকেশন)
 ADMIN_PASSWORD=...   # first super admin, created by RoleSeeder; change it after first login
 # ADMIN_REQUIRE_2FA defaults to true when APP_ENV=production: every staff member sets up an authenticator app on first login
 # SEARCH_DRIVER=database   # the built-in typo-tolerant search; no search server needed
@@ -96,7 +105,7 @@ Cron (`crontab -u www-data -e`):
 * * * * * cd /var/www/looks-jhorna/apps/backend && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-The scheduler runs: `courier:sync` (every 30 min), `flash-sales:refresh` (every minute), `carts:remind` (every 10 min, abandoned-cart SMS 9am–9pm), a nightly storefront refresh at 00:01 for date-driven copy (Ramadan mode), `model:prune` and `sanctum:prune-expired` (daily).
+The scheduler runs: `courier:sync` (every 30 min, shipments and courier return pickups), `flash-sales:refresh` (every minute), `carts:remind` (every 10 min, abandoned-cart SMS 9am–9pm), `reviews:request` (hourly), `model:prune` and `sanctum:prune-expired` (daily). The queue worker sends the emails, SMS and WhatsApp messages; without it nothing goes out.
 
 ### Nginx (backend)
 
@@ -130,11 +139,12 @@ The backend must be reachable while the storefront builds (pages are prerendered
 ## 5. After the first deploy
 
 1. Log in at `https://api.example.com/admin`, change the admin password, scan the 2FA QR code with an authenticator app and keep the recovery codes somewhere safe.
-2. সেটিংস → সাইট / ব্র্যান্ড ও থিম: name, logo, hotline, colours.
-3. সেটিংস → কুরিয়ার, SMS, পেমেন্ট: provider credentials and bKash/Nagad numbers.
-4. সেটিংস → ট্র্যাকিং: Meta pixel + CAPI token, GA4, TikTok, Google Ads, Search Console code.
-5. কনটেন্ট → হোমপেজ বিল্ডার, মেনু, পেজ (privacy, terms, return policy).
-6. Place one COD test order end to end, then cancel it.
+2. সেটিংস → সাইট / ব্র্যান্ড ও থিম: name, logo, hotline, WhatsApp number, colours (the defaults are placeholders: 01700-000000).
+3. সেটিংস → নতুন অর্ডারের নোটিফিকেশন: the emails that get new orders; press "টেস্ট ইমেইল পাঠান" to check SMTP.
+4. সেটিংস → কুরিয়ার, SMS, পেমেন্ট: provider credentials and bKash/Nagad numbers.
+5. সেটিংস → ট্র্যাকিং: Meta pixel + CAPI token, GA4, TikTok, Google Ads, Search Console code.
+6. কনটেন্ট → হোমপেজ বিল্ডার, মেনু, পেজ (privacy, terms, return policy; the contact page also mentions the hotline).
+7. Place one COD test order end to end, then cancel it.
 
 ## 6. Every later deploy
 
