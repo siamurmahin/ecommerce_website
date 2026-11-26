@@ -8,6 +8,8 @@ const localAssets = ["localhost", "127.0.0.1", "[::1]"].includes(assetOrigin.hos
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
+  // Shared hosting (cPanel/Passenger) runs the self-contained server; `pnpm start` (CI, E2E) needs the default.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   // Lets the dev server be opened as 127.0.0.1 when another tool holds localhost:3000 on IPv6.
   allowedDevOrigins: ["127.0.0.1"],
   partialPrefetching: true,
