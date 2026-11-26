@@ -88,6 +88,21 @@ class FraudAndIncompleteTest extends TestCase
         $this->assertSame(['pathao', 'steadfast'], array_keys($check->couriers));
     }
 
+    public function test_steadfast_fraud_check_uses_the_courier_keys(): void
+    {
+        app(CourierSettings::class)->fill(['fraud_driver' => 'steadfast', 'steadfast_api_key' => 'sf-key', 'steadfast_secret_key' => 'sf-secret'])->save();
+        Http::fake(['portal.packzy.com/api/v1/fraud_check/01812345678' => Http::response([
+            'total_parcels' => 24, 'total_delivered' => 9, 'total_cancelled' => 15, 'total_fraud_reports' => [],
+        ])]);
+
+        $check = app(FraudService::class)->check('01812345678');
+
+        Http::assertSent(fn ($r) => $r->hasHeader('Api-Key', 'sf-key') && $r->hasHeader('Secret-Key', 'sf-secret'));
+        $this->assertSame([24, 9, 15, 38], [$check->total, $check->delivered, $check->cancelled, $check->success_ratio]);
+        $this->assertSame('risky', $check->risk());
+        $this->assertSame(['steadfast'], array_keys($check->couriers));
+    }
+
     public function test_checkout_draft_is_saved_and_closed_when_the_phone_orders(): void
     {
         $draftId = (string) Str::uuid();

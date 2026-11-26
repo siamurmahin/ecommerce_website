@@ -5,6 +5,7 @@ use App\Domain\Courier\Drivers\RedxCourier;
 use App\Domain\Courier\Drivers\SteadfastCourier;
 use App\Domain\Fraud\Drivers\BdCourierChecker;
 use App\Domain\Fraud\Drivers\InternalHistoryChecker;
+use App\Domain\Fraud\Drivers\SteadfastFraudChecker;
 
 return [
     /* Key => Courier class. Credentials live in admin → সেটিংস → কুরিয়ার। */
@@ -18,6 +19,7 @@ return [
     'fraud_checkers' => [
         'internal' => InternalHistoryChecker::class,
         'bdcourier' => BdCourierChecker::class,
+        'steadfast' => SteadfastFraudChecker::class,
     ],
 
     'steadfast' => [

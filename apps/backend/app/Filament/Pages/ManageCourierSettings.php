@@ -116,7 +116,7 @@ class ManageCourierSettings extends Page
                 Section::make('ফ্রড চেক')->description('ফোন নম্বরের আগের পার্সেল ডেলিভারি/রিটার্ন দেখে ভুয়া অর্ডার ধরা।')->columns(2)->schema([
                     Select::make('fraud_driver')->label('কোথা থেকে চেক হবে')->native(false)->required()->live()
                         ->options(collect(config('courier.fraud_checkers'))->map(fn (string $class) => $class::label())->all()),
-                    $secret('fraud_api_key', 'API key')->visible(fn (Get $get) => $get('fraud_driver') !== 'internal'),
+                    $secret('fraud_api_key', 'API key')->visible(fn (Get $get) => $get('fraud_driver') === 'bdcourier'),
                     Toggle::make('fraud_auto_check')->label('প্রতিটা নতুন অর্ডার অটো চেক')->inline(false),
                     TextInput::make('fraud_risky_below')->label('এর কম সফল হলে "ঝুঁকিপূর্ণ" (%)')->numeric()->integer()->minValue(1)->maxValue(100)->required(),
                     TextInput::make('fraud_cache_hours')->label('একই নম্বর আবার চেক হবে (ঘণ্টা পর)')->numeric()->integer()->minValue(1)->maxValue(720)->required(),

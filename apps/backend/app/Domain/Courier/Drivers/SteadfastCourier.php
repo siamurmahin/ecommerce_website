@@ -188,6 +188,27 @@ final class SteadfastCourier implements BooksInBulk, Courier, PaysOut, TakesRetu
         return new CourierReturn((string) $response->json('data.id'), (string) $response->json('data.status'));
     }
 
+    /**
+     * The phone's parcels across all Steadfast merchants.
+     *
+     * @return array{total: int, delivered: int, cancelled: int}
+     *
+     * @throws CourierException
+     */
+    public function fraudHistory(string $phone): array
+    {
+        $response = $this->http()->timeout(15)->get('/fraud_check/'.rawurlencode($phone));
+        if (! $response->successful() || $response->json('total_parcels') === null) {
+            $this->fail($response, self::label());
+        }
+
+        return [
+            'total' => (int) $response->json('total_parcels'),
+            'delivered' => (int) $response->json('total_delivered'),
+            'cancelled' => (int) $response->json('total_cancelled'),
+        ];
+    }
+
     /** @return array<string, mixed> */
     private function orderPayload(Order $order, Parcel $parcel): array
     {
