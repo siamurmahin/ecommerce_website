@@ -167,6 +167,8 @@
     "namePlaceholder": "পুরো নাম লিখুন",
     "phone": "মোবাইল নম্বর",
     "phonePlaceholder": "01XXXXXXXXX",
+    "email": "ইমেইল (ঐচ্ছিক)",
+    "emailPlaceholder": "অর্ডারের আপডেট পেতে — you@example.com",
     "address": "ডেলিভারি ঠিকানা",
     "district": "জেলা",
     "districtPlaceholder": "জেলা বেছে নিন",

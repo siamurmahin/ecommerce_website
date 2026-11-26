@@ -8,7 +8,9 @@ use App\Settings\NotificationSettings;
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -16,6 +18,7 @@ use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Mail;
@@ -70,6 +73,26 @@ class ManageNotificationSettings extends Page
                         Toggle::make('admin_bell')->label('অ্যাডমিনের বেল আইকনে নতুন অর্ডার দেখাও')
                             ->helperText('যেসব স্টাফ অর্ডার দেখতে পারেন, তাঁদের সবার বেলে আসবে (৩০ সেকেন্ড পরপর আপডেট হয়)।'),
                     ]),
+                Section::make('কাস্টমারকে ইমেইল')
+                    ->description('কাস্টমার চেকআউটে ইমেইল দিলে অর্ডারের খবর তাঁর ইমেইলে যাবে — যে ভাষায় অর্ডার করেছেন সেই ভাষায়, পণ্য, মোট টাকা আর অর্ডার দেখার লিংকসহ। ইমেইল না দিলে কিছু যাবে না (SMS আলাদাভাবে চলে)।')
+                    ->schema([
+                        Toggle::make('customer_emails')->label('কাস্টমারকে অর্ডারের ইমেইল পাঠাও')->live(),
+                        CheckboxList::make('customer_email_events')->label('কখন পাঠাবে')
+                            ->options([
+                                'placed' => 'অর্ডার পেলে (কনফার্মেশন)',
+                                'confirmed' => 'কনফার্ম হলে',
+                                'shipped' => 'কুরিয়ারে দিলে (ট্র্যাকিং নম্বরসহ)',
+                                'delivered' => 'ডেলিভারি হলে',
+                                'cancelled' => 'বাতিল হলে',
+                            ])
+                            ->columns(2)
+                            ->visible(fn (Get $get) => $get('customer_emails')),
+                        Toggle::make('ask_email_at_checkout')->label('চেকআউটে ইমেইলের ঘর দেখাও (ঐচ্ছিক)')
+                            ->helperText('বন্ধ রাখলে কাস্টমার ইমেইল দিতে পারবেন না, তাই ইমেইলও যাবে না। ল্যান্ডিং পেজের ছোট ফর্মে এই ঘর থাকে না।'),
+                        TextInput::make('reply_to')->label('কাস্টমার রিপ্লাই দিলে কোন ইমেইলে যাবে')->email()->maxLength(150)
+                            ->placeholder('support@looksjhorna.com')
+                            ->helperText('ইমেইল যায় noreply ঠিকানা থেকে; কাস্টমার "Reply" চাপলে এই ঠিকানায় যাবে।'),
+                    ]),
             ]);
     }
 
@@ -92,7 +115,13 @@ class ManageNotificationSettings extends Page
     public function save(): void
     {
         $settings = app(NotificationSettings::class);
-        $settings->fill($this->form->getState())->save();
+        $state = $this->form->getState();
+        // Hidden while emails are off, so it may be missing from the state; keep what was saved.
+        $state['customer_email_events'] = array_values(array_intersect(
+            $state['customer_email_events'] ?? $settings->customer_email_events,
+            NotificationSettings::CUSTOMER_EVENTS,
+        ));
+        $settings->fill($state)->save();
 
         Notification::make()->success()->title('সেভ হয়েছে')->send();
     }

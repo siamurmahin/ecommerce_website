@@ -167,6 +167,8 @@
     "namePlaceholder": "Full name",
     "phone": "Mobile number",
     "phonePlaceholder": "01XXXXXXXXX",
+    "email": "Email (optional)",
+    "emailPlaceholder": "For order updates — you@example.com",
     "address": "Delivery address",
     "district": "District",
     "districtPlaceholder": "Choose district",

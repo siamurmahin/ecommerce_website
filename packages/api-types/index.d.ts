@@ -1918,6 +1918,8 @@ export interface operations {
                         }[];
                         free_delivery_threshold: number;
                         capture_incomplete: boolean;
+                        /** @description Show the optional email field: the shop emails customers about their order. */
+                        ask_email: boolean;
                         /** @description Methods the shop has switched on; wallets carry the number to send money to. @var array<int, array{code: string, number: string|null, account_type: string|null, instructions: string|null}> */
                         payment_methods: {
                             code: string;

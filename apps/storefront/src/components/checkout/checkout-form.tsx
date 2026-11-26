@@ -30,7 +30,7 @@ import { type CartLine, cartSubtotal, toCartItems, useCart } from "@/stores/cart
 import { Field, inputClass, selectClass, selectStyle } from "./field";
 import { advanceFor, type PaymentErrors, PaymentSection, type PaymentValues } from "./payment-section";
 
-type Values = { name: string; phone: string; district_id: string; thana_id: string; address: string; note: string };
+type Values = { name: string; phone: string; email: string; district_id: string; thana_id: string; address: string; note: string };
 
 type Props = {
   options: CheckoutOptions;
@@ -54,6 +54,8 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
   const cartLines = useCart((s) => s.lines);
   const clearCart = useCart((s) => s.clear);
   const landing = ownLines !== undefined;
+  // Optional, and left off the short landing-page form: the shop emails order updates to it.
+  const askEmail = options.ask_email && !landing;
   const lines = ownLines ?? cartLines;
 
   // One id per checkout visit, made on first submit (not at prerender): de-duplicates retries
@@ -75,6 +77,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
       z.object({
         name: z.string().trim().min(2, t("errors.name")).max(100, t("errors.name")),
         phone: z.string().refine((v) => BD_PHONE.test(normalizePhone(v)), t("errors.phone")),
+        email: z.union([z.literal(""), z.email(t("errors.email")).max(150, t("errors.email"))]),
         district_id: z.string().min(1, t("errors.district")),
         thana_id: z.string(),
         address: z.string().trim().min(8, t("errors.address")).max(500, t("errors.address")),
@@ -85,7 +88,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", phone: "", district_id: "", thana_id: "", address: "", note: "" },
+    defaultValues: { name: "", phone: "", email: "", district_id: "", thana_id: "", address: "", note: "" },
     mode: "onTouched",
   });
   const { register, handleSubmit, control, setError, setValue, formState } = form;
@@ -158,6 +161,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
         {
           name: values.name.trim(),
           phone: normalizePhone(values.phone),
+          email: askEmail ? values.email.trim() || null : null,
           district_id: Number(values.district_id),
           thana_id: values.thana_id ? Number(values.thana_id) : null,
           address: values.address.trim(),
@@ -198,7 +202,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
       if (error.status !== 422) return setFormError(t("errors.generic"));
 
       const fields = error.fieldErrors;
-      const map = { name: "name", phone: "phone", district_id: "district", thana_id: "thana", address: "address" } as const;
+      const map = { name: "name", phone: "phone", email: "email", district_id: "district", thana_id: "thana", address: "address" } as const;
       for (const [field, key] of Object.entries(map)) {
         if (fields[field]) setError(field as keyof Values, { message: t(`errors.${key}`) });
       }
@@ -338,6 +342,23 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
                 />
               )}
             </Field>
+            {askEmail && (
+              <div className="sm:col-span-2">
+                <Field label={t("email")} error={formState.errors.email?.message}>
+                  {(props) => (
+                    <input
+                      {...props}
+                      {...register("email")}
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder={t("emailPlaceholder")}
+                      className={inputClass}
+                    />
+                  )}
+                </Field>
+              </div>
+            )}
           </div>
         </section>
 

@@ -844,6 +844,10 @@
                                         "capture_incomplete": {
                                             "type": "boolean"
                                         },
+                                        "ask_email": {
+                                            "type": "boolean",
+                                            "description": "Show the optional email field: the shop emails customers about their order."
+                                        },
                                         "payment_methods": {
                                             "type": "array",
                                             "description": "Methods the shop has switched on; wallets carry the number to send money to. @var array<int, array{code: string, number: string|null, account_type: string|null, instructions: string|null}>",
@@ -924,6 +928,7 @@
                                         "divisions",
                                         "free_delivery_threshold",
                                         "capture_incomplete",
+                                        "ask_email",
                                         "payment_methods",
                                         "cod_advance",
                                         "gift"

@@ -17,6 +17,7 @@ use App\Http\Resources\V1\DeliveryZoneResource;
 use App\Http\Resources\V1\QuoteLineResource;
 use App\Http\Resources\V1\QuoteResource;
 use App\Settings\GiftSettings;
+use App\Settings\NotificationSettings;
 use App\Settings\PaymentSettings;
 use App\Settings\ShippingSettings;
 use App\Settings\SmsSettings;
@@ -26,7 +27,7 @@ use Illuminate\Http\Response;
 class CheckoutController extends Controller
 {
     /** Everything the checkout form needs: districts grouped by division, zones, payment methods. */
-    public function options(ShippingSettings $shipping, PaymentSettings $payment, GiftSettings $gift): array
+    public function options(ShippingSettings $shipping, PaymentSettings $payment, GiftSettings $gift, NotificationSettings $notifications): array
     {
         $fallback = DeliveryZone::fallback();
         $zones = DeliveryZone::active()->orderBy('sort_order')->get();
@@ -49,6 +50,8 @@ class CheckoutController extends Controller
             'divisions' => $divisions,
             'free_delivery_threshold' => $shipping->free_delivery_threshold,
             'capture_incomplete' => $shipping->capture_incomplete_orders,
+            /** Show the optional email field: the shop emails customers about their order. */
+            'ask_email' => (bool) ($notifications->customer_emails && $notifications->ask_email_at_checkout),
             /** Methods the shop has switched on; wallets carry the number to send money to. @var array<int, array{code: string, number: string|null, account_type: string|null, instructions: string|null}> */
             'payment_methods' => collect(PaymentMethod::cases())
                 ->filter(fn (PaymentMethod $m) => $payment->isAvailable($m))
