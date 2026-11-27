@@ -368,7 +368,8 @@
       "address": "Enter the full address (at least 8 characters)",
       "district": "Choose a district",
       "generic": "Something went wrong. Please try again.",
-      "sms": "We can't send SMS right now, please try again shortly."
+      "sms": "We can't send SMS right now, please try again shortly.",
+      "mail": "We can't send email right now, please try again shortly."
     },
     "rewards": {
       "balance": "Your points",
@@ -389,7 +390,21 @@
         "referral": "Referral bonus",
         "adjust": "Adjustment"
       }
-    }
+    },
+    "byPhone": "Mobile",
+    "byEmail": "Email",
+    "loginNoteEmail": "Enter your email and we'll send a 6-digit code. No password needed.",
+    "emailAddress": "Email address",
+    "codeSentEmail": "We sent a code to {email}. Check your spam folder if it isn't in your inbox.",
+    "changeEmail": "Change email",
+    "phoneMissing": "No number added",
+    "addPhone": "Add number",
+    "addPhoneNote": "Verify your number to see your earlier orders on it here and to sign in with your mobile too.",
+    "verifyEmail": "Verify",
+    "emailVerified": "Verified — you can sign in with this email",
+    "emailUnverified": "Verify it to sign in with this email too.",
+    "confirmCode": "Confirm",
+    "cancelVerify": "Cancel"
   },
   "flash": {
     "badge": "Flash sale",

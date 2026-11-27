@@ -117,6 +117,7 @@ final class PlaceOrder
                 'customer_name' => $data['name'],
                 'customer_phone' => $data['phone'],
                 'customer_email' => $data['email'] ?? null,
+                'customer_id' => ($context['customer'] ?? null)?->id,
                 'district_id' => $quote->district->id,
                 'district_name' => $quote->district->name,
                 'thana_id' => $thana?->id,
@@ -219,7 +220,8 @@ final class PlaceOrder
         if ($wanted <= 0) {
             return 0;
         }
-        if (! $customer || $customer->phone !== $data['phone']) {
+        // Email-only accounts have no number yet; their orders are linked to the account itself.
+        if (! $customer || ($customer->phone && $customer->phone !== $data['phone'])) {
             throw ValidationException::withMessages(['redeem_points' => 'পয়েন্ট শুধু নিজের অ্যাকাউন্টের নম্বরে অর্ডারে ব্যবহার করা যায়।']);
         }
         if ($wanted > $this->rewards->redeemable($customer->points_balance, $productsTotal)) {

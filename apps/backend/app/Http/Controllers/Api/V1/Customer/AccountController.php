@@ -31,10 +31,10 @@ class AccountController extends Controller
         return new CustomerResource($customer->load('addresses.district', 'addresses.thana'));
     }
 
-    /** Orders placed with this phone, newest first (including guest orders from before sign-up). */
+    /** Orders placed while signed in or with the verified phone, newest first (guest orders from before sign-up included). */
     public function orders(Request $request): AnonymousResourceCollection
     {
-        $orders = $this->customer($request)->orders()->with('items.product')->latest('id')->paginate(10);
+        $orders = $this->customer($request)->accountOrders()->with('items.product')->latest('id')->paginate(10);
 
         return CustomerOrderResource::collection($orders);
     }

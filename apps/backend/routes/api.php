@@ -71,11 +71,16 @@ Route::prefix('v1')->middleware(SetApiLocale::class)->group(function () {
     Route::prefix('customer')->group(function () {
         Route::post('/otp', [AuthController::class, 'sendOtp'])->middleware('throttle:otp');
         Route::post('/verify', [AuthController::class, 'verify'])->middleware('throttle:otp-verify');
+        Route::post('/email-otp', [AuthController::class, 'sendEmailOtp'])->middleware('throttle:otp');
+        Route::post('/email-verify', [AuthController::class, 'verifyEmail'])->middleware('throttle:otp-verify');
 
         Route::middleware(AuthenticateCustomer::class)->group(function () {
             Route::get('/', [AccountController::class, 'show']);
             Route::put('/', [AccountController::class, 'update']);
             Route::post('/logout', [AuthController::class, 'logout']);
+            Route::post('/email/otp', [AuthController::class, 'sendEmailChangeOtp'])->middleware('throttle:otp');
+            Route::post('/email', [AuthController::class, 'confirmEmail'])->middleware('throttle:otp-verify');
+            Route::post('/phone', [AuthController::class, 'confirmPhone'])->middleware('throttle:otp-verify');
             Route::get('/orders', [AccountController::class, 'orders']);
             Route::post('/addresses', [AccountController::class, 'storeAddress']);
             Route::put('/addresses/{address}', [AccountController::class, 'updateAddress'])->whereNumber('address');

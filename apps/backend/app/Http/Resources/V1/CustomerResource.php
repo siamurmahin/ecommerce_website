@@ -18,9 +18,12 @@ class CustomerResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            /** Null for accounts made by email until they verify a number. @var string|null */
             'phone' => $this->phone,
             'name' => $this->name,
             'email' => $this->email,
+            /** The email can be used to sign in (it was confirmed with a code). */
+            'email_verified' => $this->email_verified_at !== null,
             'addresses' => CustomerAddressResource::collection($this->addresses),
             /** Loyalty points and referral; parts the shop has switched off are null. Money is poisha. */
             'rewards' => $this->rewards(),

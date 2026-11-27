@@ -36,7 +36,7 @@ final class PointLedger
 
     public function syncOrder(Order $order): void
     {
-        $owner = Customer::firstWhere('phone', $order->customer_phone);
+        $owner = ($order->customer_id ? Customer::find($order->customer_id) : null) ?? Customer::firstWhere('phone', $order->customer_phone);
         $lost = in_array($order->status, [OrderStatus::Cancelled, OrderStatus::Returned], true);
         $delivered = $order->status === OrderStatus::Delivered;
 

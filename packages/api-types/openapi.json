@@ -109,7 +109,7 @@
         "/v1/customer/orders": {
             "get": {
                 "operationId": "account.orders",
-                "summary": "Orders placed with this phone, newest first (including guest orders from before sign-up)",
+                "summary": "Orders placed while signed in or with the verified phone, newest first (guest orders from before sign-up included)",
                 "tags": [
                     "Account"
                 ],
@@ -256,7 +256,7 @@
                 }
             },
             "post": {
-                "operationId": "v1.order.store_45",
+                "operationId": "v1.order.store_50",
                 "summary": "Guest checkout. Returns the order plus an access token for the thank-you page",
                 "tags": [
                     "Order"
@@ -655,6 +655,98 @@
                 }
             }
         },
+        "/v1/customer/email-otp": {
+            "post": {
+                "operationId": "auth.sendEmailOtp",
+                "summary": "Emails a 6-digit code to sign in with",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendEmailOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "resend_after": {
+                                            "type": "integer"
+                                        },
+                                        "is_new": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "resend_after",
+                                        "is_new"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/customer/email-verify": {
+            "post": {
+                "operationId": "auth.verifyEmail",
+                "summary": "Checks the emailed code and signs in, creating an account (without a phone) on first sign-in",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyEmailOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "customer": {
+                                            "$ref": "#/components/schemas/CustomerResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "token",
+                                        "customer"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/v1/customer/logout": {
             "post": {
                 "operationId": "auth.logout",
@@ -664,6 +756,136 @@
                 "responses": {
                     "204": {
                         "description": "No content"
+                    }
+                }
+            }
+        },
+        "/v1/customer/email/otp": {
+            "post": {
+                "operationId": "auth.sendEmailChangeOtp",
+                "summary": "Signed in: emails a code to an address the customer wants to sign in with later",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendEmailOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "resend_after": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "resend_after"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/customer/email": {
+            "post": {
+                "operationId": "auth.confirmEmail",
+                "summary": "Signed in: confirms the emailed code and makes the address a way to sign in",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyEmailOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`CustomerResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CustomerResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/v1/customer/phone": {
+            "post": {
+                "operationId": "auth.confirmPhone",
+                "summary": "Signed in without a phone: confirms the SMS code (sent by `otp`) and adds the number. If that number already\nhas an account (a guest one from earlier orders, or a phone sign-in), the two become one and a new token is\nissued for it",
+                "tags": [
+                    "Auth"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "customer": {
+                                            "$ref": "#/components/schemas/CustomerResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "token",
+                                        "customer"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -3779,7 +4001,11 @@
                         "type": "integer"
                     },
                     "phone": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Null for accounts made by email until they verify a number. @var string|null"
                     },
                     "name": {
                         "type": [
@@ -3792,6 +4018,10 @@
                             "string",
                             "null"
                         ]
+                    },
+                    "email_verified": {
+                        "type": "boolean",
+                        "description": "The email can be used to sign in (it was confirmed with a code)."
                     },
                     "addresses": {
                         "type": "array",
@@ -3875,6 +4105,7 @@
                     "phone",
                     "name",
                     "email",
+                    "email_verified",
                     "addresses",
                     "rewards"
                 ],
@@ -6203,6 +6434,20 @@
                 ],
                 "title": "SaveDraftRequest"
             },
+            "SendEmailOtpRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 150
+                    }
+                },
+                "required": [
+                    "email"
+                ],
+                "title": "SendEmailOtpRequest"
+            },
             "SendOtpRequest": {
                 "type": "object",
                 "properties": {
@@ -6487,6 +6732,33 @@
                     "name"
                 ],
                 "title": "UpdateCustomerRequest"
+            },
+            "VerifyEmailOtpRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 150
+                    },
+                    "code": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Only used when this sign-in creates the account.",
+                        "minLength": 2,
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "email",
+                    "code"
+                ],
+                "title": "VerifyEmailOtpRequest"
             },
             "VerifyOtpRequest": {
                 "type": "object",

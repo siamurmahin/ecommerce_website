@@ -4,9 +4,12 @@ import { API_URL } from "@/lib/api/client";
 
 // Customer-account calls go through here so the login token lives in an httpOnly cookie the browser
 // scripts can't read. /api/customer/me → GET {API}/customer, /api/customer/orders → {API}/customer/orders…
-// The verify response's token is swapped for the cookie; logout (or an expired token) clears it.
+// Responses that issue a token (code sign-in, or adding a phone that merges accounts) have it swapped for the
+// cookie; logout (or an expired token) clears it.
 
 const COOKIE = "lj_customer";
+const PUBLIC = new Set(["otp", "verify", "email-otp", "email-verify"]);
+const ISSUES_TOKEN = new Set(["verify", "email-verify", "phone"]);
 const MAX_AGE = 60 * 24 * 60 * 60; // matches the backend token lifetime
 
 async function handle(request: NextRequest, { params }: RouteContext<"/api/customer/[...path]">) {
@@ -21,7 +24,7 @@ async function handle(request: NextRequest, { params }: RouteContext<"/api/custo
   // every page, so it answers null rather than a 401 that browsers log as a console error.
   const whoAmI = sub === "me" && request.method === "GET";
   if (!token && whoAmI) return Response.json({ data: null });
-  if (!token && sub !== "otp" && sub !== "verify") return Response.json({ message: "Unauthenticated." }, { status: 401 });
+  if (!token && !PUBLIC.has(sub)) return Response.json({ message: "Unauthenticated." }, { status: 401 });
   const headers = new Headers({ Accept: "application/json" });
   const type = request.headers.get("content-type");
   if (type) headers.set("Content-Type", type);
@@ -42,7 +45,7 @@ async function handle(request: NextRequest, { params }: RouteContext<"/api/custo
     cache: "no-store",
   });
 
-  if (sub === "verify" && res.ok) {
+  if (ISSUES_TOKEN.has(sub) && res.ok) {
     const { token: issued, customer } = (await res.json()) as { token: string; customer: unknown };
     jar.set(COOKIE, issued, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: MAX_AGE });
     return Response.json({ customer });

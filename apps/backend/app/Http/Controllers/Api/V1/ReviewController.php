@@ -91,6 +91,6 @@ class ReviewController extends Controller
 
     private function deliveredOrders(Customer $customer)
     {
-        return $customer->orders()->where('status', OrderStatus::Delivered);
+        return $customer->accountOrders()->where('status', OrderStatus::Delivered);
     }
 }

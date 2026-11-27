@@ -98,7 +98,7 @@ function AddressForm({ address, customer, options, onCancel, onSaved }: {
   const [draft, setDraft] = useState<Draft>({
     label: address?.label ?? "",
     name: address?.name ?? customer.name ?? "",
-    phone: address?.phone ?? customer.phone,
+    phone: address?.phone ?? customer.phone ?? "",
     district_id: address ? String(address.district_id) : "",
     thana_id: address?.thana_id ? String(address.thana_id) : "",
     address: address?.address ?? "",

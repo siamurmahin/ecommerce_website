@@ -138,7 +138,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
     const fallback = customer.addresses.find((a) => a.is_default) ?? customer.addresses[0];
     if (fallback) return applyAddress(fallback);
     if (customer.name) setValue("name", customer.name);
-    setValue("phone", customer.phone);
+    if (customer.phone) setValue("phone", customer.phone);
   }, [customer, form, setValue, applyAddress]);
   // Order bumps the customer ticked; kept here (not in the cart) and sent as extra quote/order lines.
   const [bumps, setBumps] = useState<Record<number, Quote["bumps"][number]>>({});
@@ -153,11 +153,20 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
   const { data: quote, refetch, isFetching } = useCartQuote(districtId, bumpItems, ownLines, landingQuote);
   const offers = [...Object.values(bumps), ...(quote?.bumps ?? []).filter((b) => !bumps[b.id])];
 
+  // Signed-in orders go through the account route so they belong to the account (email-only ones have no phone).
+  // A login that expired meanwhile falls back to a guest order unless points were being spent.
+  const submitOrder = (input: PlaceOrderInput, redeem: number) =>
+    customer
+      ? placeCustomerOrder(input, locale).catch((e: unknown) => {
+          if (e instanceof ApiError && e.status === 401 && redeem === 0) return placeOrder(input, locale);
+          throw e;
+        })
+      : placeOrder(input, locale);
+
   const mutation = useMutation({
     // `transfer`: this order sends money by wallet first, so the payment fields go out.
-    // `redeem`: points to spend; those orders go through the signed-in route.
     mutationFn: ({ values, transfer, redeem }: { values: Values; transfer: boolean; redeem: number }) =>
-      (redeem > 0 ? placeCustomerOrder : placeOrder)(
+      submitOrder(
         {
           name: values.name.trim(),
           phone: normalizePhone(values.phone),
@@ -185,7 +194,7 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
           ...readGaIds(),
           ...(redeem > 0 ? { redeem_points: redeem } : {}),
         },
-        locale,
+        redeem,
       ),
     onSuccess: ({ data, access_token }, { redeem }) => {
       setPlaced(true);
@@ -289,7 +298,8 @@ export function CheckoutForm({ options, lines: ownLines, landingPageId, packageI
   const deliveryCharge = quote ? quote.delivery_charge : null;
   // Points: worked out here for display; the API checks them again when the order is placed.
   const pointsRules = customer?.rewards.points ?? null;
-  const ownNumber = !!customer && normalizePhone(watched.phone ?? "") === customer.phone;
+  // Points are spent on orders to the account's own number; an email-only account has none to compare with.
+  const ownNumber = !!customer && (!customer.phone || normalizePhone(watched.phone ?? "") === customer.phone);
   const redeemable = pointsRules && quote ? redeemablePoints(pointsRules, quote.subtotal - quote.discount_total) : 0;
   const redeem = usePoints && ownNumber && !landing ? redeemable : 0;
   const pointsDiscount = redeem * (pointsRules?.point_value ?? 0);

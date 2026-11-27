@@ -65,11 +65,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Orders placed with this phone, newest first (including guest orders from before sign-up) */
+        /** Orders placed while signed in or with the verified phone, newest first (guest orders from before sign-up included) */
         get: operations["account.orders"];
         put?: never;
         /** Guest checkout. Returns the order plus an access token for the thank-you page */
-        post: operations["v1.order.store_45"];
+        post: operations["v1.order.store_50"];
         delete?: never;
         options?: never;
         head?: never;
@@ -159,6 +159,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/customer/email-otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Emails a 6-digit code to sign in with */
+        post: operations["auth.sendEmailOtp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/customer/email-verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Checks the emailed code and signs in, creating an account (without a phone) on first sign-in */
+        post: operations["auth.verifyEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/customer/logout": {
         parameters: {
             query?: never;
@@ -169,6 +203,59 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["auth.logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/customer/email/otp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Signed in: emails a code to an address the customer wants to sign in with later */
+        post: operations["auth.sendEmailChangeOtp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/customer/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Signed in: confirms the emailed code and makes the address a way to sign in */
+        post: operations["auth.confirmEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/customer/phone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Signed in without a phone: confirms the SMS code (sent by `otp`) and adds the number. If that number already
+         *     has an account (a guest one from earlier orders, or a phone sign-in), the two become one and a new token is
+         *     issued for it */
+        post: operations["auth.confirmPhone"];
         delete?: never;
         options?: never;
         head?: never;
@@ -886,9 +973,12 @@ export interface components {
         /** CustomerResource */
         CustomerResource: {
             id: number;
-            phone: string;
+            /** @description Null for accounts made by email until they verify a number. @var string|null */
+            phone: string | null;
             name: string | null;
             email: string | null;
+            /** @description The email can be used to sign in (it was confirmed with a code). */
+            email_verified: boolean;
             addresses: components["schemas"]["CustomerAddressResource"][];
             /** @description Loyalty points and referral; parts the shop has switched off are null. Money is poisha. */
             rewards: {
@@ -1414,6 +1504,11 @@ export interface components {
                 utm_term?: string | null;
             };
         };
+        /** SendEmailOtpRequest */
+        SendEmailOtpRequest: {
+            /** Format: email */
+            email: string;
+        };
         /** SendOtpRequest */
         SendOtpRequest: {
             phone: string;
@@ -1477,6 +1572,14 @@ export interface components {
             name: string;
             /** Format: email */
             email?: string | null;
+        };
+        /** VerifyEmailOtpRequest */
+        VerifyEmailOtpRequest: {
+            /** Format: email */
+            email: string;
+            code: string;
+            /** @description Only used when this sign-in creates the account. */
+            name?: string | null;
         };
         /** VerifyOtpRequest */
         VerifyOtpRequest: {
@@ -1619,7 +1722,7 @@ export interface operations {
             };
         };
     };
-    "v1.order.store_45": {
+    "v1.order.store_50": {
         parameters: {
             query?: never;
             header?: never;
@@ -1824,6 +1927,60 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "auth.sendEmailOtp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendEmailOtpRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        resend_after: number;
+                        is_new: boolean;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "auth.verifyEmail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailOtpRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        token: string;
+                        customer: components["schemas"]["CustomerResource"];
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "auth.logout": {
         parameters: {
             query?: never;
@@ -1840,6 +1997,86 @@ export interface operations {
                 };
                 content?: never;
             };
+        };
+    };
+    "auth.sendEmailChangeOtp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendEmailOtpRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        resend_after: number;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "auth.confirmEmail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailOtpRequest"];
+            };
+        };
+        responses: {
+            /** @description `CustomerResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["CustomerResource"];
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "auth.confirmPhone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyOtpRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        token: string;
+                        customer: components["schemas"]["CustomerResource"];
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "category.index": {

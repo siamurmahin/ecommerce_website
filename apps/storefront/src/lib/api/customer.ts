@@ -31,6 +31,21 @@ export const sendOtp = (phone: string, locale: string) => customerApi<OtpSent>("
 export const verifyOtp = (input: { phone: string; code: string; name?: string | null }, locale: string) =>
   customerApi<{ customer: Customer }>("verify", { json: input, locale });
 
+export const sendEmailOtp = (email: string, locale: string) => customerApi<OtpSent>("email-otp", { json: { email }, locale });
+
+export const verifyEmailOtp = (input: { email: string; code: string; name?: string | null }, locale: string) =>
+  customerApi<{ customer: Customer }>("email-verify", { json: input, locale });
+
+/** Signed in: send a code to an email the customer wants to sign in with later, then confirm it. */
+export const sendEmailChangeOtp = (email: string, locale: string) => customerApi<{ resend_after: number }>("email/otp", { json: { email }, locale });
+
+export const confirmEmail = async (input: { email: string; code: string }, locale: string) =>
+  (await customerApi<{ data: Customer }>("email", { json: input, locale })).data;
+
+/** Signed in without a number: the code comes from `sendOtp`; the account may merge with the one on that number. */
+export const confirmPhone = async (input: { phone: string; code: string }, locale: string) =>
+  (await customerApi<{ customer: Customer }>("phone", { json: input, locale })).customer;
+
 export const logout = (locale: string) => customerApi<null>("logout", { method: "POST", locale });
 
 export const updateProfile = async (input: { name: string; email: string | null }, locale: string) =>

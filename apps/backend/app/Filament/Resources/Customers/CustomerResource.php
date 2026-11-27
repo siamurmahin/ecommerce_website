@@ -50,19 +50,20 @@ class CustomerResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['phone', 'name'];
+        return ['phone', 'name', 'email'];
     }
 
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
             Grid::make(2)->schema([
-                TextInput::make('phone')->label('মোবাইল')->required()->tel()->maxLength(20)
+                TextInput::make('phone')->label('মোবাইল')->required(fn (string $operation) => $operation === 'create')->tel()->maxLength(20)
                     ->dehydrateStateUsing(fn (?string $state) => Phone::normalize($state))
                     ->rule('regex:'.Phone::PATTERN)->unique(ignoreRecord: true)
-                    ->disabledOn('edit')->helperText('নম্বরই কাস্টমারের লগইন, পরে বদলানো যায় না'),
+                    ->disabledOn('edit')->helperText('নম্বরই কাস্টমারের লগইন, পরে বদলানো যায় না (ইমেইলে খোলা অ্যাকাউন্টে কাস্টমার নিজে যাচাই করে যুক্ত করেন)'),
                 TextInput::make('name')->label('নাম')->maxLength(100),
-                TextInput::make('email')->label('ইমেইল')->email()->maxLength(150),
+                TextInput::make('email')->label('ইমেইল')->email()->maxLength(150)
+                    ->helperText('বদলালে কাস্টমারকে নতুন ঠিকানাটা আবার কোড দিয়ে যাচাই করতে হবে, তারপর ইমেইলে লগইন হবে।'),
                 Toggle::make('is_blocked')->label('ব্লক')->inline(false)->live()
                     ->helperText('ওয়েবসাইট থেকে অর্ডার আর লগইন বন্ধ; ফোনে অর্ডার নেওয়া যাবে'),
                 TextInput::make('blocked_reason')->label('ব্লকের কারণ')->maxLength(255)->columnSpanFull()
@@ -77,8 +78,9 @@ class CustomerResource extends Resource
         return $schema->columns(3)->components([
             Section::make()->columnSpan(2)->columns(2)->schema([
                 TextEntry::make('name')->label('নাম')->placeholder('—'),
-                TextEntry::make('phone')->label('মোবাইল')->copyable()->url(fn (Customer $record) => 'tel:'.$record->phone),
-                TextEntry::make('email')->label('ইমেইল')->placeholder('—'),
+                TextEntry::make('phone')->label('মোবাইল')->copyable()->placeholder('নম্বর যাচাই করা হয়নি')->url(fn (Customer $record) => $record->phone ? 'tel:'.$record->phone : null),
+                TextEntry::make('email')->label('ইমেইল')->placeholder('—')
+                    ->helperText(fn (Customer $record) => $record->email ? ($record->email_verified_at ? 'যাচাই করা — এই ইমেইলে লগইন করেন' : 'যাচাই করা হয়নি') : null),
                 TextEntry::make('last_login_at')->label('শেষ লগইন')->since()->placeholder('কখনো লগইন করেননি'),
                 TextEntry::make('note')->label('নোট')->placeholder('—')->columnSpanFull(),
             ]),
@@ -97,8 +99,8 @@ class CustomerResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('name')->label('কাস্টমার')->placeholder('নাম নেই')->description(fn (Customer $record) => $record->phone)
-                    ->searchable(['name', 'phone']),
+                TextColumn::make('name')->label('কাস্টমার')->placeholder('নাম নেই')->description(fn (Customer $record) => $record->phone ?? $record->email)
+                    ->searchable(['name', 'phone', 'email']),
                 TextColumn::make('orders_count')->label('অর্ডার')->numeric()->sortable(),
                 TextColumn::make('orders_sum_total')->label('মোট কেনাকাটা')->formatStateUsing(fn ($state) => Money::format((int) $state))->sortable(),
                 TextColumn::make('points_balance')->label('পয়েন্ট')->numeric()->sortable()->toggleable(),
